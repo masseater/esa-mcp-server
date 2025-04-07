@@ -21,6 +21,7 @@ import {
   CreatePostBody, // 今回追加
   updatePost, // 今回追加
   UpdatePostBody, // 今回追加
+  deletePost, // 今回追加
 } from "./esa_client.ts";
 
 /* 不要なので削除
@@ -476,3 +477,79 @@ Deno.test(
 );
 
 // --- ここまで updatePost のテスト ---
+
+// --- ここから deletePost のテスト ---
+
+Deno.test("deletePost should delete an existing post", async (t) => {
+  // --- Step 1: Create a post to delete ---
+  const timestampCreate = new Date().toISOString();
+  const initialPostData: CreatePostBody = {
+    post: {
+      name: `[Test] Post to Delete ${timestampCreate}`,
+      body_md: "This post will be deleted.",
+      tags: ["test", "delete-target"],
+      wip: true,
+      message: "Creating post for delete test",
+    },
+  };
+
+  let createdPostNumber: number | undefined;
+
+  await t.step("Create post to delete", async () => {
+    const createResult = await createPost(initialPostData);
+    assertOk(createResult, "テスト用記事の作成が成功すること");
+    createdPostNumber = createResult.value.number;
+    console.log(` -> Created post #${createdPostNumber} for delete test.`);
+  });
+
+  // --- Step 2: Delete the created post ---
+  await t.step("Delete the post", async () => {
+    assertExists(createdPostNumber, "作成された記事番号が取得できていること");
+
+    const deleteResult = await deletePost(createdPostNumber);
+    assertOk(deleteResult, `記事(No.${createdPostNumber})の削除が成功すること`);
+    assertEquals(deleteResult.value, true, "削除成功時は true が返ること");
+
+    console.log(`✅ [Test Success] Post deleted: #${createdPostNumber}`);
+  });
+
+  // --- Step 3: Verify deletion by trying to fetch the deleted post ---
+  await t.step("Verify deletion (fetch should fail)", async () => {
+    assertExists(createdPostNumber, "削除した記事番号が取得できていること");
+    const fetchResult = await getPostDetail(createdPostNumber);
+
+    assert(!fetchResult.ok, "削除済み記事の取得は失敗すること");
+    assert(fetchResult.error instanceof Error);
+    assert(
+      fetchResult.error.message.includes("API Error 404"), // 404 Not Found を期待
+      "エラーメッセージに 'API Error 404' が含まれること"
+    );
+    console.log(
+      `✅ [Test Success] Verified post #${createdPostNumber} is deleted (fetch failed with 404).`
+    );
+  });
+});
+
+Deno.test(
+  "deletePost should return an error for a non-existent post number",
+  async () => {
+    // Arrange
+    const nonExistentPostNumber = 99999998; // 存在しないであろう非常に大きな番号
+
+    // Act
+    const result = await deletePost(nonExistentPostNumber);
+
+    // Assert
+    assert(!result.ok, "存在しない記事の削除は失敗すること");
+    assert(result.error instanceof Error);
+    assert(
+      result.error.message.includes("API Error 404"), // 404 Not Found を期待
+      "エラーメッセージに 'API Error 404' が含まれること"
+    );
+    console.log(
+      `✅ [Test Success] Correctly handled deletion attempt for non-existent post #${nonExistentPostNumber}.`
+    );
+  }
+);
+
+// --- ここまで deletePost のテスト ---

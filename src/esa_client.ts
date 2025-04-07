@@ -441,6 +441,61 @@ export async function updatePost(
   }
 }
 
+/**
+ * esa.io API で指定された記事を削除する関数なのだ
+ */
+export async function deletePost(
+  postNumber: number
+): Promise<Result<true, Error>> {
+  // 成功時はボディがないので Result<true, Error> とするのだ
+  if (postNumber <= 0) {
+    return err(new Error("Invalid post number. Must be greater than 0."));
+  }
+
+  const url = `${esaClientConfig.baseUrl}/posts/${postNumber}`;
+  console.log(`[API Request] DELETE ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: "DELETE", // 削除なので DELETE メソッド
+      headers: {
+        // DELETE リクエストでは Content-Type は不要なことが多い
+        Authorization: esaClientConfig.headers.Authorization,
+      },
+      // body は不要
+    });
+
+    if (response.status !== 204) {
+      // 成功は 204 No Content
+      const errorBody = await response
+        .text()
+        .catch(() => "(Failed to read error body)");
+      console.error(
+        `[API Error] Failed to delete post #${postNumber}: ${response.status} ${response.statusText}`,
+        `URL: ${url}`
+      );
+      // 存在しない記事を削除しようとした場合も 404 が返るはず
+      return err(
+        new Error(
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
+        )
+      );
+    }
+
+    // ステータスコード 204 No Content の場合 (成功)
+    console.log(`[API Success] Post deleted: #${postNumber}`);
+    return ok(true); // ボディがないので true を返す
+  } catch (error) {
+    console.error(
+      `[Network Error] Failed to delete post #${postNumber}:`,
+      error
+    );
+    return err(
+      error instanceof Error ? error : new Error("Unknown network error")
+    );
+  }
+}
+
 // --- ここまで追加 ---
 
 // console.log("esa.io API クライアント設定完了なのだ！"); // 動作確認用なのでコメントアウトしても良いのだ
