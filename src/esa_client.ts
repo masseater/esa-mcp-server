@@ -4,14 +4,6 @@ import { load } from "dotenv";
 // allowEmptyValues: true にしないと、値がない場合にエラーになることがあるのだ
 const env = await load({ export: true, allowEmptyValues: true });
 
-// --- デバッグ用に追加 ---
-console.log(
-  "[DEBUG] ESA_TOKEN from env:",
-  Deno.env.get("ESA_TOKEN") ? "読み込みOK" : "読み込み失敗 or 空"
-);
-console.log("[DEBUG] ESA_TEAM_NAME from env:", Deno.env.get("ESA_TEAM_NAME"));
-// --- デバッグ用に追加 ここまで ---
-
 const ESA_TOKEN = Deno.env.get("ESA_TOKEN");
 const ESA_TEAM_NAME = Deno.env.get("ESA_TEAM_NAME");
 
@@ -91,13 +83,13 @@ export async function getUserInfo(): Promise<Result<EsaUser, Error>> {
         .text()
         .catch(() => "(Failed to read error body)"); // エラー内容取得失敗も考慮
       console.error(
-        `[API Error] Failed to fetch user info: ${response.status} ${response.statusText}`
+        `[API Error] Failed to fetch user info: ${response.status} ${response.statusText}`,
       );
       // Error オブジェクトで失敗を示すのだ
       return err(
         new Error(
-          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
-        )
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`,
+        ),
       );
     }
 
@@ -107,7 +99,7 @@ export async function getUserInfo(): Promise<Result<EsaUser, Error>> {
     console.error("[Network Error] Failed to fetch user info:", error);
     // ネットワークエラーなども Error オブジェクトで返すのだ
     return err(
-      error instanceof Error ? error : new Error("Unknown network error")
+      error instanceof Error ? error : new Error("Unknown network error"),
     );
   }
 }
@@ -178,7 +170,7 @@ export interface GetPostsOptions {
  * esa.io API から記事一覧を取得する関数なのだ
  */
 export async function getPosts(
-  options: GetPostsOptions = {}
+  options: GetPostsOptions = {},
 ): Promise<Result<GetPostsResponse, Error>> {
   // URLSearchParams を使ってクエリパラメータを組み立てるのだ
   const params = new URLSearchParams();
@@ -197,8 +189,6 @@ export async function getPosts(
     queryString ? `?${queryString}` : ""
   }`;
 
-  console.log(`[API Request] GET ${url}`); // デバッグ用にリクエストURLを表示
-
   try {
     const response = await fetch(url, {
       method: "GET",
@@ -211,12 +201,12 @@ export async function getPosts(
         .catch(() => "(Failed to read error body)");
       console.error(
         `[API Error] Failed to fetch posts: ${response.status} ${response.statusText}`,
-        `URL: ${url}`
+        `URL: ${url}`,
       );
       return err(
         new Error(
-          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
-        )
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`,
+        ),
       );
     }
 
@@ -225,7 +215,7 @@ export async function getPosts(
   } catch (error) {
     console.error("[Network Error] Failed to fetch posts:", error);
     return err(
-      error instanceof Error ? error : new Error("Unknown network error")
+      error instanceof Error ? error : new Error("Unknown network error"),
     );
   }
 }
@@ -234,7 +224,7 @@ export async function getPosts(
  * esa.io API から特定の記事の詳細を取得する関数なのだ
  */
 export async function getPostDetail(
-  postNumber: number
+  postNumber: number,
 ): Promise<Result<EsaPost, Error>> {
   if (postNumber <= 0) {
     // 不正な記事番号の場合は、APIを叩く前にエラーにするのだ
@@ -242,7 +232,6 @@ export async function getPostDetail(
   }
 
   const url = `${esaClientConfig.baseUrl}/posts/${postNumber}`; // 記事番号をパスに追加
-  console.log(`[API Request] GET ${url}`);
 
   try {
     const response = await fetch(url, {
@@ -256,12 +245,12 @@ export async function getPostDetail(
         .catch(() => "(Failed to read error body)");
       console.error(
         `[API Error] Failed to fetch post detail (number: ${postNumber}): ${response.status} ${response.statusText}`,
-        `URL: ${url}`
+        `URL: ${url}`,
       );
       return err(
         new Error(
-          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
-        )
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`,
+        ),
       );
     }
 
@@ -269,174 +258,17 @@ export async function getPostDetail(
     // 記事番号が一致しているか念のため確認するのだ
     if (post.number !== postNumber) {
       console.warn(
-        `[Data Warning] Requested post number ${postNumber} but received ${post.number}.`
+        `[Data Warning] Requested post number ${postNumber} but received ${post.number}.`,
       );
     }
     return ok(post);
   } catch (error) {
     console.error(
       `[Network Error] Failed to fetch post detail (number: ${postNumber}):`,
-      error
+      error,
     );
     return err(
-      error instanceof Error ? error : new Error("Unknown network error")
-    );
-  }
-}
-
-/**
- * 記事作成APIのリクエストボディの型
- * @see https://docs.esa.io/posts/102#POST /v1/teams/:team_name/posts
- */
-export interface CreatePostBody {
-  post: {
-    name: string; // 記事タイトル (必須)
-    body_md?: string; // Markdown本文
-    tags?: string[]; // タグ名の配列
-    category?: string; // カテゴリ (e.g., "日報/2024/04")
-    wip?: boolean; // true だと WIP (書き途中) として作成 (デフォルト: true)
-    message?: string; // 編集時のメッセージ (任意)
-    // user?: string; // 作成者を screen_name で指定可能 (optional)
-  };
-}
-
-/**
- * esa.io API で新しい記事を作成する関数なのだ
- */
-export async function createPost(
-  postData: CreatePostBody
-): Promise<Result<EsaPost, Error>> {
-  // 戻り値は作成された記事情報 (EsaPost)
-  // name (タイトル) は必須なのでチェックするのだ
-  if (!postData?.post?.name) {
-    return err(new Error("Post title (name) is required to create a post."));
-  }
-
-  const url = `${esaClientConfig.baseUrl}/posts`;
-  console.log(`[API Request] POST ${url}`);
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: esaClientConfig.headers,
-      body: JSON.stringify(postData), // リクエストボディをJSON文字列にするのだ
-    });
-
-    // ステータスコード 201 (Created) 以外もエラー扱いにする
-    if (response.status !== 201) {
-      // 成功は 201 Created
-      const errorBody = await response
-        .text()
-        .catch(() => "(Failed to read error body)");
-      console.error(
-        `[API Error] Failed to create post: ${response.status} ${response.statusText}`,
-        `URL: ${url}`,
-        `Request Body: ${JSON.stringify(postData)}` // デバッグ用にリクエスト内容も出すのだ
-      );
-      return err(
-        new Error(
-          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
-        )
-      );
-    }
-
-    // ステータスコード 201 Created の場合
-    const createdPost: EsaPost = await response.json();
-    console.log(
-      `[API Success] Post created: #${createdPost.number} "${createdPost.name}"`
-    );
-    return ok(createdPost);
-  } catch (error) {
-    console.error("[Network Error] Failed to create post:", error);
-    return err(
-      error instanceof Error ? error : new Error("Unknown network error")
-    );
-  }
-}
-
-/**
- * 記事更新APIのリクエストボディの型
- * CreatePostBody と似ているが、更新なので name は必須ではない。
- * @see https://docs.esa.io/posts/102#PATCH /v1/teams/:team_name/posts/:post_number
- */
-export interface UpdatePostBody {
-  post: {
-    name?: string; // 新しい記事タイトル (省略可能)
-    body_md?: string; // 新しいMarkdown本文 (省略可能)
-    tags?: string[]; // 新しいタグ名の配列 (省略可能)
-    category?: string; // 新しいカテゴリ (省略可能)
-    wip?: boolean; // WIP状態の変更 (省略可能)
-    message?: string; // 編集時のメッセージ (必須)
-    // updated_by?: string; // 更新者を screen_name で指定可能 (optional)
-    original_revision?: {
-      // 編集競合防止用 (optional)
-      body_md: string;
-      number: number;
-      user: string;
-    };
-  };
-}
-
-/**
- * esa.io API で既存の記事を更新する関数なのだ
- */
-export async function updatePost(
-  postNumber: number,
-  postData: UpdatePostBody
-): Promise<Result<EsaPost, Error>> {
-  // 戻り値は更新された記事情報
-  if (postNumber <= 0) {
-    return err(new Error("Invalid post number. Must be greater than 0."));
-  }
-  // 更新内容が空でないかチェック (何か一つは指定されているべき)
-  if (!postData?.post || Object.keys(postData.post).length === 0) {
-    return err(new Error("No update data provided for the post."));
-  }
-  // message は必須 (API仕様より)
-  if (!postData.post.message) {
-    // 自動でメッセージを生成するか、エラーにするか。ここではエラーにする。
-    return err(new Error("Update message is required when updating a post."));
-  }
-
-  const url = `${esaClientConfig.baseUrl}/posts/${postNumber}`;
-  console.log(`[API Request] PATCH ${url}`);
-
-  try {
-    const response = await fetch(url, {
-      method: "PATCH", // 更新なので PATCH メソッド
-      headers: esaClientConfig.headers,
-      body: JSON.stringify(postData),
-    });
-
-    if (!response.ok) {
-      // 成功は 200 OK
-      const errorBody = await response
-        .text()
-        .catch(() => "(Failed to read error body)");
-      console.error(
-        `[API Error] Failed to update post #${postNumber}: ${response.status} ${response.statusText}`,
-        `URL: ${url}`,
-        `Request Body: ${JSON.stringify(postData)}`
-      );
-      return err(
-        new Error(
-          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
-        )
-      );
-    }
-
-    const updatedPost: EsaPost = await response.json();
-    console.log(
-      `[API Success] Post updated: #${updatedPost.number} "${updatedPost.name}"`
-    );
-    return ok(updatedPost);
-  } catch (error) {
-    console.error(
-      `[Network Error] Failed to update post #${postNumber}:`,
-      error
-    );
-    return err(
-      error instanceof Error ? error : new Error("Unknown network error")
+      error instanceof Error ? error : new Error("Unknown network error"),
     );
   }
 }
@@ -445,58 +277,49 @@ export async function updatePost(
  * esa.io API で指定された記事を削除する関数なのだ
  */
 export async function deletePost(
-  postNumber: number
-): Promise<Result<true, Error>> {
-  // 成功時はボディがないので Result<true, Error> とするのだ
+  postNumber: number,
+): Promise<Result<true, Error>> { // 成功時はボディがないので Result<true, Error> とするのだ
   if (postNumber <= 0) {
     return err(new Error("Invalid post number. Must be greater than 0."));
   }
 
   const url = `${esaClientConfig.baseUrl}/posts/${postNumber}`;
-  console.log(`[API Request] DELETE ${url}`);
 
   try {
     const response = await fetch(url, {
       method: "DELETE", // 削除なので DELETE メソッド
-      headers: {
-        // DELETE リクエストでは Content-Type は不要なことが多い
+      headers: { // DELETE リクエストでは Content-Type は不要なことが多い
         Authorization: esaClientConfig.headers.Authorization,
       },
       // body は不要
     });
 
-    if (response.status !== 204) {
-      // 成功は 204 No Content
-      const errorBody = await response
-        .text()
-        .catch(() => "(Failed to read error body)");
+    if (response.status !== 204) { // 成功は 204 No Content
+      const errorBody = await response.text().catch(() =>
+        "(Failed to read error body)"
+      );
       console.error(
         `[API Error] Failed to delete post #${postNumber}: ${response.status} ${response.statusText}`,
-        `URL: ${url}`
+        `URL: ${url}`,
       );
       // 存在しない記事を削除しようとした場合も 404 が返るはず
       return err(
         new Error(
-          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
-        )
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`,
+        ),
       );
     }
 
-    // ステータスコード 204 No Content の場合 (成功)
-    console.log(`[API Success] Post deleted: #${postNumber}`);
     return ok(true); // ボディがないので true を返す
   } catch (error) {
     console.error(
       `[Network Error] Failed to delete post #${postNumber}:`,
-      error
+      error,
     );
     return err(
-      error instanceof Error ? error : new Error("Unknown network error")
+      error instanceof Error ? error : new Error("Unknown network error"),
     );
   }
 }
 
-// --- ここまで追加 ---
-
-// console.log("esa.io API クライアント設定完了なのだ！"); // 動作確認用なのでコメントアウトしても良いのだ
-// console.log(`チーム: ${ESA_TEAM_NAME}`); // 動作確認用なのでコメントアウトしても良いのだ
+// --- ここまで記事削除関連 ---

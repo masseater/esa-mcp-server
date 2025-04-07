@@ -1,6 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run --watch main.ts"
+    "dev": "deno run --watch --allow-read --allow-env --allow-net --allow-read main.ts",
+    "start": "deno run --allow-env --allow-net --allow-read main.ts"
   },
   "lint": {
     "files": {
@@ -24,7 +25,10 @@
   },
   "compilerOptions": {},
   "imports": {
+    "fastmcp": "npm:fastmcp@^1.21.0",
     "std/": "https://deno.land/std@0.224.0/",
-    "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts"
+    "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
+    "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.8.0",
+    "zod": "npm:zod@^3.24.2"
   }
 }
