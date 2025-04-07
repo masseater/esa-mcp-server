@@ -114,5 +114,123 @@ export async function getUserInfo(): Promise<Result<EsaUser, Error>> {
 
 // --- ここまで Result 型の定義と getUserInfo の変更 ---
 
+// --- ここから追加 ---
+
+/**
+ * esa.io 記事情報の基本的な型定義 (必要に応じて拡張するのだ)
+ * @see https://docs.esa.io/posts/102#GET /v1/teams/:team_name/posts
+ */
+export interface EsaPost {
+  number: number;
+  name: string; // 記事タイトル
+  full_name: string; // カテゴリ含む記事名 (e.g., "日報/2024/04/08/本日の作業")
+  wip: boolean; // Work in Progress かどうか
+  body_md: string; // Markdown本文
+  body_html: string; // HTML本文
+  created_at: string;
+  updated_at: string;
+  message: string; // update時のメッセージ
+  url: string; // 記事のURL
+  tags: string[];
+  category: string | null;
+  revision_number: number;
+  created_by: {
+    // 作成者情報 (簡易)
+    myself: boolean;
+    name: string;
+    screen_name: string;
+    icon: string;
+  };
+  updated_by: {
+    // 更新者情報 (簡易)
+    myself: boolean;
+    name: string;
+    screen_name: string;
+    icon: string;
+  };
+  // 他にも overlap や comments_count など色々あるのだ
+}
+
+/**
+ * 記事一覧取得APIのレスポンス型
+ */
+export interface GetPostsResponse {
+  posts: EsaPost[];
+  prev_page: number | null;
+  next_page: number | null;
+  total_count: number;
+  page: number;
+  per_page: number;
+  max_per_page: number;
+}
+
+/**
+ * 記事一覧取得APIのクエリオプション
+ */
+export interface GetPostsOptions {
+  q?: string; // 検索クエリ
+  page?: number; // ページ番号
+  per_page?: number; // 1ページあたりの記事数 (1-100)
+  // 他にも include や sort, order などがあるのだ
+}
+
+/**
+ * esa.io API から記事一覧を取得する関数なのだ
+ */
+export async function getPosts(
+  options: GetPostsOptions = {}
+): Promise<Result<GetPostsResponse, Error>> {
+  // URLSearchParams を使ってクエリパラメータを組み立てるのだ
+  const params = new URLSearchParams();
+  if (options.q) {
+    params.set("q", options.q);
+  }
+  if (options.page) {
+    params.set("page", options.page.toString());
+  }
+  if (options.per_page) {
+    params.set("per_page", options.per_page.toString());
+  }
+
+  const queryString = params.toString();
+  const url = `${esaClientConfig.baseUrl}/posts${
+    queryString ? `?${queryString}` : ""
+  }`;
+
+  console.log(`[API Request] GET ${url}`); // デバッグ用にリクエストURLを表示
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: esaClientConfig.headers,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response
+        .text()
+        .catch(() => "(Failed to read error body)");
+      console.error(
+        `[API Error] Failed to fetch posts: ${response.status} ${response.statusText}`,
+        `URL: ${url}`
+      );
+      return err(
+        new Error(
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
+        )
+      );
+    }
+
+    const data: GetPostsResponse = await response.json();
+    return ok(data);
+  } catch (error) {
+    console.error("[Network Error] Failed to fetch posts:", error);
+    return err(
+      error instanceof Error ? error : new Error("Unknown network error")
+    );
+  }
+}
+
+// --- ここまで追加 ---
+
 // console.log("esa.io API クライアント設定完了なのだ！"); // 動作確認用なのでコメントアウトしても良いのだ
 // console.log(`チーム: ${ESA_TEAM_NAME}`); // 動作確認用なのでコメントアウトしても良いのだ

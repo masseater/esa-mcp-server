@@ -1,6 +1,22 @@
-import { assertEquals, assertExists, assert } from "std/assert/mod.ts";
+import {
+  assertEquals,
+  assertExists,
+  assert,
+  assertArrayIncludes, // 配列チェック用
+} from "std/assert/mod.ts";
 // import { add } from "./main.ts"; // 不要なので削除
-import { getUserInfo, EsaUser, esaClientConfig } from "./esa_client.ts";
+import {
+  getUserInfo,
+  EsaUser,
+  esaClientConfig, // テスト内で使うかも
+  getPosts, // 今回追加
+  GetPostsOptions, // 今回追加
+  GetPostsResponse, // 今回追加
+  EsaPost, // 今回追加
+  Result, // Result 型
+  ok, // ok ヘルパー
+  err, // err ヘルパー
+} from "./esa_client.ts";
 
 /* 不要なので削除
 Deno.test(function addTest() {
@@ -96,3 +112,70 @@ Deno.test(
 //   // assert(result.error instanceof Error, "エラーが Error オブジェクトであること");
 //   // assertEquals(result.error.message.includes("401 Unauthorized"), true, "エラーメッセージに 401 が含まれること");
 // });
+
+// --- ここから getPosts のテスト ---
+
+Deno.test("getPosts should fetch the first page of posts", async () => {
+  // Arrange
+  const options: GetPostsOptions = {}; // オプションなし
+
+  // Act
+  const result = await getPosts(options);
+
+  // Assert
+  assertOk(result, "記事一覧の取得が成功すること (result.ok === true)");
+
+  const response = result.value;
+  assertExists(response.posts, "posts 配列が存在すること");
+  assert(Array.isArray(response.posts), "posts が配列であること");
+  assertExists(response.total_count, "total_count が存在すること");
+  assertEquals(
+    typeof response.total_count,
+    "number",
+    "total_count が数値であること"
+  );
+  assertEquals(response.page, 1, "デフォルトで1ページ目が取得されること"); // デフォルトは1のはず
+
+  // 最初の記事だけでも構造をチェック
+  if (response.posts.length > 0) {
+    const post = response.posts[0];
+    assertExists(post.number, "記事番号 (number) が存在すること");
+    assertExists(post.name, "記事名 (name) が存在すること");
+    assertExists(post.created_by, "作成者情報 (created_by) が存在すること");
+    assertEquals(typeof post.number, "number");
+    assertEquals(typeof post.name, "string");
+  }
+
+  console.log(
+    `✅ [Test Success] Fetched ${response.posts.length} posts (Total: ${response.total_count}) on page ${response.page}.`
+  );
+});
+
+Deno.test("getPosts should fetch posts with options (per_page)", async () => {
+  // Arrange
+  const options: GetPostsOptions = { per_page: 5 }; // 1ページあたり5件
+
+  // Act
+  const result = await getPosts(options);
+
+  // Assert
+  assertOk(result, "オプション付きの記事一覧取得が成功すること");
+
+  const response = result.value;
+  assert(
+    response.posts.length <= 5,
+    "取得した記事数が per_page (5) 以下であること"
+  );
+  assertEquals(
+    response.per_page,
+    5,
+    "レスポンスの per_page が指定通りであること"
+  );
+  assertEquals(response.page, 1, "ページ番号が1であること"); // ページ指定なしなので1
+
+  console.log(
+    `✅ [Test Success] Fetched ${response.posts.length} posts with per_page=5.`
+  );
+});
+
+// --- ここまで getPosts のテスト ---
