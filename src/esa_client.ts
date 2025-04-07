@@ -230,6 +230,60 @@ export async function getPosts(
   }
 }
 
+/**
+ * esa.io API から特定の記事の詳細を取得する関数なのだ
+ */
+export async function getPostDetail(
+  postNumber: number
+): Promise<Result<EsaPost, Error>> {
+  if (postNumber <= 0) {
+    // 不正な記事番号の場合は、APIを叩く前にエラーにするのだ
+    return err(new Error("Invalid post number. Must be greater than 0."));
+  }
+
+  const url = `${esaClientConfig.baseUrl}/posts/${postNumber}`; // 記事番号をパスに追加
+  console.log(`[API Request] GET ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: esaClientConfig.headers,
+    });
+
+    if (!response.ok) {
+      const errorBody = await response
+        .text()
+        .catch(() => "(Failed to read error body)");
+      console.error(
+        `[API Error] Failed to fetch post detail (number: ${postNumber}): ${response.status} ${response.statusText}`,
+        `URL: ${url}`
+      );
+      return err(
+        new Error(
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
+        )
+      );
+    }
+
+    const post: EsaPost = await response.json();
+    // 記事番号が一致しているか念のため確認するのだ
+    if (post.number !== postNumber) {
+      console.warn(
+        `[Data Warning] Requested post number ${postNumber} but received ${post.number}.`
+      );
+    }
+    return ok(post);
+  } catch (error) {
+    console.error(
+      `[Network Error] Failed to fetch post detail (number: ${postNumber}):`,
+      error
+    );
+    return err(
+      error instanceof Error ? error : new Error("Unknown network error")
+    );
+  }
+}
+
 // --- ここまで追加 ---
 
 // console.log("esa.io API クライアント設定完了なのだ！"); // 動作確認用なのでコメントアウトしても良いのだ

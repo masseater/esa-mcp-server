@@ -16,6 +16,7 @@ import {
   Result, // Result 型
   ok, // ok ヘルパー
   err, // err ヘルパー
+  getPostDetail, // 今回追加
 } from "./esa_client.ts";
 
 /* 不要なので削除
@@ -179,3 +180,89 @@ Deno.test("getPosts should fetch posts with options (per_page)", async () => {
 });
 
 // --- ここまで getPosts のテスト ---
+
+// --- ここから getPostDetail のテスト ---
+
+Deno.test(
+  "getPostDetail should fetch a specific post by its number",
+  async () => {
+    // Arrange
+    const postNumberToFetch = 1; // !!!注意!!! ここは実際に存在する記事番号に置き換える必要があるかも！
+
+    // Act
+    const result = await getPostDetail(postNumberToFetch);
+
+    // Assert
+    assertOk(result, `記事詳細(No.${postNumberToFetch})の取得が成功すること`);
+
+    const post = result.value;
+    assertEquals(
+      post.number,
+      postNumberToFetch,
+      "取得した記事の番号が指定した番号と一致すること"
+    );
+    assertExists(post.name, "記事名 (name) が存在すること");
+    assertExists(post.body_md, "Markdown本文 (body_md) が存在すること");
+    assertExists(post.created_at, "作成日時 (created_at) が存在すること");
+    assertExists(post.url, "記事URL (url) が存在すること");
+
+    console.log(
+      `✅ [Test Success] Fetched post detail: #${post.number} "${post.name}"`
+    );
+  }
+);
+
+Deno.test(
+  "getPostDetail should return an error for an invalid post number (e.g., 0)",
+  async () => {
+    // Arrange
+    const invalidPostNumber = 0;
+
+    // Act
+    const result = await getPostDetail(invalidPostNumber);
+
+    // Assert
+    assert(
+      !result.ok,
+      "不正な記事番号ではエラーが返ること (result.ok === false)"
+    );
+    assert(
+      result.error instanceof Error,
+      "エラーが Error オブジェクトであること"
+    );
+    assert(
+      result.error.message.includes("Invalid post number"),
+      "エラーメッセージに'Invalid post number'が含まれること"
+    );
+
+    console.log(
+      `✅ [Test Success] Correctly handled invalid post number: ${invalidPostNumber}`
+    );
+  }
+);
+
+Deno.test(
+  "getPostDetail should return an error for a non-existent post number",
+  async () => {
+    // Arrange
+    const nonExistentPostNumber = 99999999; // 存在しないであろう非常に大きな番号
+
+    // Act
+    const result = await getPostDetail(nonExistentPostNumber);
+
+    // Assert
+    assert(!result.ok, "存在しない記事番号ではエラーが返ること");
+    assert(result.error instanceof Error);
+    // 404 Not Found が返ってくるはず
+    assert(
+      result.error.message.includes("API Error 404"),
+      "エラーメッセージに 'API Error 404' が含まれること"
+    );
+
+    console.log(
+      `✅ [Test Success] Correctly handled non-existent post number: ${nonExistentPostNumber}`
+    );
+  }
+);
+
+// --- ここまで getPostDetail のテスト ---
