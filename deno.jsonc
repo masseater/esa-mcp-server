@@ -1,39 +1,34 @@
 {
-  "tasks": {
-    "dev": "deno run --watch --allow-read --allow-env --allow-net --allow-read main.ts",
-    "start": "deno run --allow-env --allow-net --allow-read main.ts"
-  },
-  "lint": {
-    "files": {
-      "include": ["**/*.ts"],
-      "exclude": ["node_modules/"]
+    "tasks": {
+        "dev": "deno run --watch --allow-read --allow-env --allow-net --allow-read main.ts",
+        "start": "deno run --allow-env --allow-net --allow-read main.ts"
     },
-    "rules": {
-      "tags": ["recommended"],
-      "include": [
-        "no-console"
-      ]
-    }
-  },
-  "fmt": {
-    "files": {
-      "include": ["**/*.ts"],
-      "exclude": ["node_modules/"]
+    "lint": {
+        "include": ["**/*.ts"],
+        "exclude": ["node_modules/"],
+        "rules": {
+            "tags": ["recommended"],
+            "include": [
+                "no-console"
+            ]
+        }
     },
-    "options": {
-      "useTabs": false,
-      "lineWidth": 80,
-      "indentWidth": 4,
-      "singleQuote": false,
-      "proseWrap": "always"
+    "fmt": {
+        "include": ["**/*.ts"],
+        "exclude": ["node_modules/"],
+        "useTabs": false,
+        "lineWidth": 80,
+        "indentWidth": 4,
+        "singleQuote": false,
+        "proseWrap": "always"
+    },
+    "compilerOptions": {},
+    "imports": {
+        "fastmcp": "npm:fastmcp@^1.21.0",
+        "std/": "https://deno.land/std@0.224.0/",
+        "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
+        "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.8.0",
+        "zod": "npm:zod@^3.24.2"
     }
-  },
-  "compilerOptions": {},
-  "imports": {
-    "fastmcp": "npm:fastmcp@^1.21.0",
-    "std/": "https://deno.land/std@0.224.0/",
-    "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
-    "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.8.0",
-    "zod": "npm:zod@^3.24.2"
-  }
 }
+

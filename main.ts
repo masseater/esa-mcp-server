@@ -6,8 +6,8 @@ import { registerUserTools } from "./src/tools/user.ts";
 import { registerPostTools } from "./src/tools/posts.ts";
 
 const server = new FastMCP({
-  name: "esa-mcp",
-  version: "1.0.0",
+    name: "esa-mcp",
+    version: "1.0.0",
 });
 
 // Register tools using the imported functions
@@ -17,5 +17,5 @@ registerPostTools(server);
 // Remove all old server.addTool calls and schema definitions
 
 server.start({
-  transportType: "stdio",
+    transportType: "stdio",
 });

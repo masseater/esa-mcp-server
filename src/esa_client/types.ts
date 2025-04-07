@@ -9,14 +9,14 @@ export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
  * 成功時の Result オブジェクトを作成するヘルパー関数なのだ。
  */
 export function ok<T, E>(value: T): Result<T, E> {
-  return { ok: true, value };
+    return { ok: true, value };
 }
 
 /**
  * 失敗時の Result オブジェクトを作成するヘルパー関数なのだ。
  */
 export function err<T, E>(error: E): Result<T, E> {
-  return { ok: false, error };
+    return { ok: false, error };
 }
 
 // --- ユーザー関連型定義 ---
@@ -25,13 +25,13 @@ export function err<T, E>(error: E): Result<T, E> {
  * @see https://docs.esa.io/posts/102#GET /v1/user
  */
 export interface EsaUser {
-  id: number;
-  name: string;
-  screen_name: string;
-  created_at: string; // ISO 8601形式
-  updated_at: string; // ISO 8601形式
-  icon: string; // URL
-  email: string;
+    id: number;
+    name: string;
+    screen_name: string;
+    created_at: string; // ISO 8601形式
+    updated_at: string; // ISO 8601形式
+    icon: string; // URL
+    email: string;
 }
 
 // --- 記事関連型定義 ---
@@ -40,53 +40,53 @@ export interface EsaUser {
  * @see https://docs.esa.io/posts/102#GET /v1/teams/:team_name/posts
  */
 export interface EsaPost {
-  number: number;
-  name: string; // 記事タイトル
-  full_name: string; // カテゴリ含む記事名 (e.g., "日報/2024/04/08/本日の作業")
-  wip: boolean; // Work in Progress かどうか
-  body_md: string; // Markdown本文
-  body_html: string; // HTML本文
-  created_at: string;
-  updated_at: string;
-  message: string; // update時のメッセージ
-  url: string; // 記事のURL
-  tags: string[];
-  category: string | null;
-  revision_number: number;
-  created_by: {
-    myself: boolean;
-    name: string;
-    screen_name: string;
-    icon: string;
-  };
-  updated_by: {
-    myself: boolean;
-    name: string;
-    screen_name: string;
-    icon: string;
-  };
+    number: number;
+    name: string; // 記事タイトル
+    full_name: string; // カテゴリ含む記事名 (e.g., "日報/2024/04/08/本日の作業")
+    wip: boolean; // Work in Progress かどうか
+    body_md: string; // Markdown本文
+    body_html: string; // HTML本文
+    created_at: string;
+    updated_at: string;
+    message: string; // update時のメッセージ
+    url: string; // 記事のURL
+    tags: string[];
+    category: string | null;
+    revision_number: number;
+    created_by: {
+        myself: boolean;
+        name: string;
+        screen_name: string;
+        icon: string;
+    };
+    updated_by: {
+        myself: boolean;
+        name: string;
+        screen_name: string;
+        icon: string;
+    };
 }
 
 /**
  * 記事一覧取得APIのレスポンス型
  */
 export interface GetPostsResponse {
-  posts: EsaPost[];
-  prev_page: number | null;
-  next_page: number | null;
-  total_count: number;
-  page: number;
-  per_page: number;
-  max_per_page: number;
+    posts: EsaPost[];
+    prev_page: number | null;
+    next_page: number | null;
+    total_count: number;
+    page: number;
+    per_page: number;
+    max_per_page: number;
 }
 
 /**
  * 記事一覧取得APIのクエリオプション
  */
 export interface GetPostsOptions {
-  q?: string;
-  page?: number;
-  per_page?: number;
+    q?: string;
+    page?: number;
+    per_page?: number;
 }
 
 /**
@@ -94,15 +94,15 @@ export interface GetPostsOptions {
  * @see https://docs.esa.io/posts/102#POST /v1/teams/:team_name/posts
  */
 export interface CreatePostBody {
-  post: {
-    name: string;
-    body_md?: string;
-    tags?: string[];
-    category?: string;
-    wip?: boolean;
-    message?: string;
-    user?: string;
-  };
+    post: {
+        name: string;
+        body_md?: string;
+        tags?: string[];
+        category?: string;
+        wip?: boolean;
+        message?: string;
+        user?: string;
+    };
 }
 
 /**
@@ -115,14 +115,14 @@ export type CreatePostResponse = EsaPost;
  * @see https://docs.esa.io/posts/102#PATCH /v1/teams/:team_name/posts/:post_number
  */
 export interface UpdatePostBody {
-  post: {
-    name?: string;
-    body_md?: string;
-    tags?: string[];
-    category?: string;
-    wip?: boolean;
-    message?: string;
-  };
+    post: {
+        name?: string;
+        body_md?: string;
+        tags?: string[];
+        category?: string;
+        wip?: boolean;
+        message?: string;
+    };
 }
 
 /**
