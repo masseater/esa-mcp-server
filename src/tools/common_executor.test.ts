@@ -35,6 +35,49 @@ const testSchema = z.object({
 type TestSchemaInput = z.infer<typeof testSchema>;
 
 // Mock fetch implementation
+const mockFetch = async (
+    input: string | URL | Request,
+    init?: RequestInit,
+): Promise<Response> => {
+    const url = input instanceof URL
+        ? input.href
+        : input instanceof Request
+        ? input.url // Request オブジェクトから URL を取得
+        : String(input);
+    const method = init?.method?.toUpperCase() ??
+        (input instanceof Request ? input.method.toUpperCase() : "GET"); // Request から method を取得
+
+    // --- Define mock responses based on URL and method ---
+    // Example: Success for testToolSuccess (needs a specific API path)
+    if (url.endsWith("/test/success") && method === "POST") {
+        return new Response(JSON.stringify({ data: "Mocked fetch success!" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        });
+    }
+    // Example: Success for testToolFormatter
+    if (url.endsWith("/test/formatter") && method === "POST") {
+        return new Response(JSON.stringify({ data: "Formatted Data" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        });
+    }
+    // Example: API error for testToolApiError
+    if (url.endsWith("/test/api_error") && method === "POST") {
+        return new Response(JSON.stringify({ message: "Mock API Failed" }), {
+            status: 500,
+            statusText: "Internal Server Error",
+            headers: { "Content-Type": "application/json" },
+        });
+    }
+    // Example: Network error (simulate by throwing)
+    if (url.endsWith("/test/network_error")) {
+        throw new Error("Simulated network failure");
+    }
+
+    // Default: Not Found (どの条件にも一致しない場合)
+    return new Response("Not Found", { status: 404 });
+};
 
 describe("createEsaToolExecutor", () => {
     let mockLogger: ReturnType<typeof createMockLogger>;
@@ -43,6 +86,7 @@ describe("createEsaToolExecutor", () => {
     beforeEach(() => {
         mockLogger = createMockLogger();
         mockContext = createMockContext(mockLogger);
+        stub(globalThis, "fetch", mockFetch);
     });
 
     afterEach(() => {
