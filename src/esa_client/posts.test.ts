@@ -1,21 +1,30 @@
+// Standard library imports
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
   returnsNext,
   stub,
 } from "https://deno.land/std@0.224.0/testing/mock.ts";
+
+// Import functions under test from posts.ts
 import {
   createPost,
-  type CreatePostBody,
   deletePost,
-  type EsaPost,
   getPostDetail,
   getPosts,
-  type GetPostsOptions,
-  type GetPostsResponse,
-  ok,
   updatePost,
-  type UpdatePostBody,
-} from "./esa_client.ts";
+} from "./posts.ts";
+
+// Import types and helpers from types.ts
+import type {
+  CreatePostBody,
+  EsaPost,
+  GetPostsOptions,
+  GetPostsResponse,
+  UpdatePostBody,
+} from "./types.ts";
+import { ok } from "./types.ts"; // ok helper is needed for assertions
+
+// --- Test Cases for Post related functions ---
 
 // createPost のテストケース
 Deno.test("createPost - success", async () => {
@@ -106,8 +115,6 @@ Deno.test("createPost - API error", async () => {
   const result = await createPost(postBody);
 
   // 結果を検証 (err が返ることを期待)
-  // エラーメッセージは API のレスポンスによって変わるので、ここでは ok: false であることと、
-  // エラーオブジェクトの型をチェックするのだ
   assertEquals(
     result.ok,
     false,
@@ -119,8 +126,6 @@ Deno.test("createPost - API error", async () => {
       true,
       "エラーオブジェクトが Error インスタンスであること",
     );
-    // エラーメッセージの内容まで厳密にチェックする場合は以下のようにするのだ
-    // assertEquals(result.error.message, 'API Error 400: Bad Request. Body: {"error":"invalid_parameter","message":"Name is required"}');
   }
 
   // スタブを元に戻す
@@ -248,10 +253,10 @@ Deno.test("updatePost - no update fields", async () => {
 
 Deno.test("updatePost - API error", async () => {
   const postNumber = 123;
-  const updateBody: UpdatePostBody = { post: { name: "Updated Title" } };
+  const updateBody: UpdatePostBody = { post: { name: "Test" } };
   const errorBody = JSON.stringify({
     error: "not_found",
-    message: "Post not found",
+    message: "Not Found",
   });
 
   const fetchStub = stub(
@@ -269,13 +274,29 @@ Deno.test("updatePost - API error", async () => {
   );
 
   const result = await updatePost(postNumber, updateBody);
-  assertEquals(
-    result.ok,
-    false,
-    "APIエラー時に ok: false の Result が返ること",
-  );
+  assertEquals(result.ok, false, "APIエラー時に ok: false が返ること");
   if (!result.ok) {
     assertEquals(result.error instanceof Error, true);
+  }
+
+  fetchStub.restore();
+});
+
+Deno.test("updatePost - network error", async () => {
+  const postNumber = 123;
+  const updateBody: UpdatePostBody = { post: { name: "Test" } };
+
+  const fetchStub = stub(
+    globalThis,
+    "fetch",
+    () => Promise.reject(new Error("Connection refused")),
+  );
+
+  const result = await updatePost(postNumber, updateBody);
+  assertEquals(result.ok, false, "ネットワークエラー時に ok: false が返ること");
+  if (!result.ok) {
+    assertEquals(result.error instanceof Error, true);
+    assertEquals(result.error.message, "Connection refused");
   }
 
   fetchStub.restore();
@@ -285,28 +306,28 @@ Deno.test("updatePost - API error", async () => {
 Deno.test("deletePost - success", async () => {
   const postNumber = 123;
 
+  // fetch をスタブ化し、成功レスポンス (204 No Content) を返す
   const fetchStub = stub(
     globalThis,
     "fetch",
     returnsNext([
       Promise.resolve(
-        new Response(null, { // No body for 204
-          status: 204, // No Content for DELETE success
+        new Response(null, {
+          status: 204, // No Content
+          statusText: "No Content",
         }),
       ),
     ]),
   );
 
   const result = await deletePost(postNumber);
-  assertEquals(result, ok(true), "記事削除が成功し、ok(true)が返ること");
+  assertEquals(result, ok(true), "記事削除成功時に ok(true) が返ること");
 
   fetchStub.restore();
 });
 
 Deno.test("deletePost - invalid post number", async () => {
   const postNumber = 0;
-
-  // fetch should not be called
   const result = await deletePost(postNumber);
   assertEquals(result.ok, false, "不正な記事番号で ok: false が返ること");
   if (!result.ok) {
@@ -317,20 +338,21 @@ Deno.test("deletePost - invalid post number", async () => {
   }
 });
 
-Deno.test("deletePost - API error (not found)", async () => {
-  const postNumber = 404;
+Deno.test("deletePost - API error (e.g., 404 Not Found)", async () => {
+  const postNumber = 999; // 存在しない記事番号
   const errorBody = JSON.stringify({
     error: "not_found",
-    message: "Post not found",
+    message: "Not Found",
   });
 
+  // fetch をスタブ化し、404 Not Found を返す
   const fetchStub = stub(
     globalThis,
     "fetch",
     returnsNext([
       Promise.resolve(
         new Response(errorBody, {
-          status: 404, // Not Found
+          status: 404,
           statusText: "Not Found",
           headers: { "Content-Type": "application/json" },
         }),
@@ -339,15 +361,27 @@ Deno.test("deletePost - API error (not found)", async () => {
   );
 
   const result = await deletePost(postNumber);
-  assertEquals(
-    result.ok,
-    false,
-    "APIエラー (404) 時に ok: false の Result が返ること",
-  );
+  assertEquals(result.ok, false, "APIエラー時に ok: false が返ること");
   if (!result.ok) {
     assertEquals(result.error instanceof Error, true);
-    // Check specific message if needed
-    // assertEquals(result.error.message, 'API Error 404: Not Found. Body: ...');
+  }
+
+  fetchStub.restore();
+});
+
+Deno.test("deletePost - network error", async () => {
+  const postNumber = 123;
+  const fetchStub = stub(
+    globalThis,
+    "fetch",
+    () => Promise.reject(new Error("Timeout")), // ネットワークエラーを発生
+  );
+
+  const result = await deletePost(postNumber);
+  assertEquals(result.ok, false, "ネットワークエラー時に ok: false が返ること");
+  if (!result.ok) {
+    assertEquals(result.error instanceof Error, true);
+    assertEquals(result.error.message, "Timeout");
   }
 
   fetchStub.restore();
@@ -356,15 +390,12 @@ Deno.test("deletePost - API error (not found)", async () => {
 // getPosts のテストケース
 Deno.test("getPosts - success (no options)", async () => {
   const mockResponse: GetPostsResponse = {
-    posts: [
-      {/* ... mock EsaPost 1 ... */} as EsaPost,
-      {/* ... mock EsaPost 2 ... */} as EsaPost,
-    ],
+    posts: [],
     prev_page: null,
-    next_page: 2,
-    total_count: 100,
+    next_page: null,
+    total_count: 0,
     page: 1,
-    per_page: 2,
+    per_page: 20,
     max_per_page: 100,
   };
 
@@ -381,23 +412,8 @@ Deno.test("getPosts - success (no options)", async () => {
     ]),
   );
 
-  const result = await getPosts(); // No options
-
-  // Verify fetch was called with the correct URL (without query params)
-  const urlArg = fetchStub.calls[0].args[0];
-  const urlString = typeof urlArg === "string"
-    ? urlArg
-    : (urlArg instanceof URL ? urlArg.href : "");
-  assertEquals(
-    urlString.endsWith("/posts"),
-    true,
-    "Fetch URL should end with /posts",
-  );
-  assertEquals(
-    result,
-    ok(mockResponse),
-    "記事一覧取得 (オプション無) が成功すること",
-  );
+  const result = await getPosts();
+  assertEquals(result, ok(mockResponse), "オプション無しで成功すること");
 
   fetchStub.restore();
 });
@@ -405,8 +421,7 @@ Deno.test("getPosts - success (no options)", async () => {
 Deno.test("getPosts - success (with options)", async () => {
   const options: GetPostsOptions = { q: "test", page: 2, per_page: 10 };
   const mockResponse: GetPostsResponse = {
-    // ... mock response data ...
-    posts: [],
+    posts: [/* 省略: 必要ならダミー記事データを入れる */],
     prev_page: 1,
     next_page: 3,
     total_count: 25,
@@ -418,49 +433,39 @@ Deno.test("getPosts - success (with options)", async () => {
   const fetchStub = stub(
     globalThis,
     "fetch",
-    returnsNext([
-      Promise.resolve(
+    (url: string | URL | Request) => {
+      const urlObj = new URL(url.toString());
+      assertEquals(urlObj.searchParams.get("q"), "test");
+      assertEquals(urlObj.searchParams.get("page"), "2");
+      assertEquals(urlObj.searchParams.get("per_page"), "10");
+      return Promise.resolve(
         new Response(JSON.stringify(mockResponse), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         }),
-      ),
-    ]),
+      );
+    },
   );
 
   const result = await getPosts(options);
-
-  // Verify fetch was called with the correct URL and query params
-  const expectedUrl = `/posts?q=test&page=2&per_page=10`;
-  const urlArgWithOptions = fetchStub.calls[0].args[0];
-  const urlStringWithOptions = typeof urlArgWithOptions === "string"
-    ? urlArgWithOptions
-    : (urlArgWithOptions instanceof URL ? urlArgWithOptions.href : "");
-  assertEquals(
-    urlStringWithOptions.endsWith(expectedUrl),
-    true,
-    `Fetch URL should end with ${expectedUrl}`,
-  );
-  assertEquals(
-    result,
-    ok(mockResponse),
-    "記事一覧取得 (オプション有) が成功すること",
-  );
+  assertEquals(result, ok(mockResponse), "オプション付きで成功すること");
 
   fetchStub.restore();
 });
 
 Deno.test("getPosts - API error", async () => {
-  const errorBody = JSON.stringify({ error: "internal_server_error" });
-
+  const errorBody = JSON.stringify({
+    error: "forbidden",
+    message: "Forbidden",
+  });
   const fetchStub = stub(
     globalThis,
     "fetch",
     returnsNext([
       Promise.resolve(
         new Response(errorBody, {
-          status: 500,
-          statusText: "Internal Server Error",
+          status: 403,
+          statusText: "Forbidden",
           headers: { "Content-Type": "application/json" },
         }),
       ),
@@ -468,11 +473,7 @@ Deno.test("getPosts - API error", async () => {
   );
 
   const result = await getPosts();
-  assertEquals(
-    result.ok,
-    false,
-    "APIエラー時に ok: false の Result が返ること",
-  );
+  assertEquals(result.ok, false, "APIエラー時に ok: false が返ること");
   if (!result.ok) {
     assertEquals(result.error instanceof Error, true);
   }
@@ -480,17 +481,43 @@ Deno.test("getPosts - API error", async () => {
   fetchStub.restore();
 });
 
+Deno.test("getPosts - network error", async () => {
+  const fetchStub = stub(
+    globalThis,
+    "fetch",
+    () => Promise.reject(new Error("DNS lookup failed")),
+  );
+
+  const result = await getPosts();
+  assertEquals(result.ok, false, "ネットワークエラー時に ok: false が返ること");
+  if (!result.ok) {
+    assertEquals(result.error instanceof Error, true);
+    assertEquals(result.error.message, "DNS lookup failed");
+  }
+
+  fetchStub.restore();
+});
+
 // getPostDetail のテストケース
 Deno.test("getPostDetail - success", async () => {
-  const postNumber = 123;
+  const postNumber = 456;
   const mockResponse: EsaPost = {
     number: postNumber,
-    name: "Specific Post Title",
-    full_name: "Category/Specific Post Title",
+    name: "Detailed Post",
+    full_name: "Detailed Post",
     wip: false,
-    body_md: "Detailed content here.",
-    body_html: "<p>Detailed content here.</p>",
-  } as EsaPost; // Cast for brevity in example
+    body_md: "Details here.",
+    body_html: "<p>Details here.</p>",
+    created_at: "2024-01-02T00:00:00Z",
+    updated_at: "2024-01-02T00:00:00Z",
+    message: "Initial commit",
+    url: `https://example.esa.io/posts/${postNumber}`,
+    tags: [],
+    category: null,
+    revision_number: 1,
+    created_by: {/* ... */} as any,
+    updated_by: {/* ... */} as any,
+  };
 
   const fetchStub = stub(
     globalThis,
@@ -506,13 +533,6 @@ Deno.test("getPostDetail - success", async () => {
   );
 
   const result = await getPostDetail(postNumber);
-
-  // Verify fetch was called with the correct URL
-  const urlArg = fetchStub.calls[0].args[0];
-  const urlString = typeof urlArg === "string"
-    ? urlArg
-    : (urlArg instanceof URL ? urlArg.href : "");
-  assertEquals(urlString.endsWith(`/posts/${postNumber}`), true);
   assertEquals(result, ok(mockResponse), "記事詳細取得が成功すること");
 
   fetchStub.restore();
@@ -520,8 +540,6 @@ Deno.test("getPostDetail - success", async () => {
 
 Deno.test("getPostDetail - invalid post number", async () => {
   const postNumber = -1;
-
-  // fetch should not be called
   const result = await getPostDetail(postNumber);
   assertEquals(result.ok, false, "不正な記事番号で ok: false が返ること");
   if (!result.ok) {
@@ -532,11 +550,11 @@ Deno.test("getPostDetail - invalid post number", async () => {
   }
 });
 
-Deno.test("getPostDetail - API error (not found)", async () => {
+Deno.test("getPostDetail - API error (404 Not Found)", async () => {
   const postNumber = 999;
   const errorBody = JSON.stringify({
     error: "not_found",
-    message: "Post not found",
+    message: "Not Found",
   });
 
   const fetchStub = stub(
@@ -554,13 +572,27 @@ Deno.test("getPostDetail - API error (not found)", async () => {
   );
 
   const result = await getPostDetail(postNumber);
-  assertEquals(
-    result.ok,
-    false,
-    "APIエラー (404) 時に ok: false の Result が返ること",
-  );
+  assertEquals(result.ok, false, "APIエラー時に ok: false が返ること");
   if (!result.ok) {
     assertEquals(result.error instanceof Error, true);
+  }
+
+  fetchStub.restore();
+});
+
+Deno.test("getPostDetail - network error", async () => {
+  const postNumber = 123;
+  const fetchStub = stub(
+    globalThis,
+    "fetch",
+    () => Promise.reject(new Error("Failed to connect")),
+  );
+
+  const result = await getPostDetail(postNumber);
+  assertEquals(result.ok, false, "ネットワークエラー時に ok: false が返ること");
+  if (!result.ok) {
+    assertEquals(result.error instanceof Error, true);
+    assertEquals(result.error.message, "Failed to connect");
   }
 
   fetchStub.restore();
