@@ -1,0 +1,40 @@
+# プロジェクト
+
+esa.ioのAPIを使用して、基本的な操作を行えるMCPサーバーを作る
+.envで完了変数を管理し、ESA_TOKEN, ESA_TEAM_NAMEでそれぞれAPIトークンとチーム名を管理する。
+
+esa.ioのAPIについては https://docs.esa.io/posts/102 を参照。
+
+# 使用技術
+
+- deno
+- TypeScript
+
+# 開発計画
+
+1.  **基盤構築フェーズ**
+    *   Denoプロジェクト初期化 (`deno init`, `biome.json` 設定)
+    *   環境変数設定 (`.env`, Denoでの読み込み)
+    *   APIクライアント基礎 (認証、ベースURL)
+    *   Memory Bank 初期設定 (`projectbrief.md`, `techContext.md`)
+
+2.  **コア機能実装フェーズ**
+    *   **ユーザー情報取得 (`/user`, テスト)**
+    *   記事一覧取得 (`/posts`, 検索、テスト)
+    *   記事詳細取得 (`/posts/:post_number`, テスト)
+    *   エラー処理
+    *   Memory Bank 更新 (`systemPatterns.md`, `activeContext.md`, `progress.md`)
+
+3.  **追加機能と改善フェーズ**
+    *   記事作成 (`POST /posts`, テスト)
+    *   記事更新 (`PATCH /posts/:post_number`, テスト)
+    *   記事削除 (`DELETE /posts/:post_number`, テスト)
+    *   ドキュメント作成 (`.ray_local/cursor_docs/`)
+    *   Memory Bank 更新 (`productContext.md`)
+
+# 進め方のポイント
+
+*   フェーズごとに `git commit`
+*   TDD (テスト駆動開発)
+*   必要に応じて機能追加 (コメント等)
+*   サーバーのドキュメント作成
