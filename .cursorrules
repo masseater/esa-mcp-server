@@ -36,5 +36,37 @@ esa.ioのAPIについては https://docs.esa.io/posts/102 を参照。
 
 *   フェーズごとに `git commit`
 *   TDD (テスト駆動開発)
+*   **こまめにテスト (`deno test`) とフォーマット/リントチェック (`deno fmt`, `deno lint` or Biome commands) を実行するのだ**
 *   必要に応じて機能追加 (コメント等)
 *   サーバーのドキュメント作成
+
+# Logging in FastMCP Tools
+
+- **DO NOT** use `console.log()` or `console.error()` for logging within MCP
+  tool `execute` functions.
+- **ALWAYS** use the `log` object destructured from the second argument of the
+  `execute` function (e.g., `async execute(args, { log })`) for logging
+  messages.
+  - Use `log.info()`, `log.warn()`, `log.error()`, `log.debug()` as appropriate.
+
+# FastMCP Server Development Notes
+
+## Logging
+
+- **DO NOT** use `console.log()` or `console.error()` anywhere in the MCP server process, including imported modules (`src/esa_client.ts`, etc.). Using `console` in the server process interferes with the stdio transport used by Cursor and will likely cause `Client closed` errors.
+- **ALWAYS** use the `log` object destructured from the second argument of the tools `execute` function for logging within tools (e.g., `async execute(args, { log })`). Use `log.info()`, `log.warn()`, `log.error()`, etc.
+- For logging outside of `execute` (e.g., during server initialization), standard logging methods provided by `FastMCP` seem unavailable. If necessary, consider temporary file logging (`Deno.writeTextFile`) with `--allow-write`, but remove it for final use if possible.
+
+## MCP Server Reloads
+
+- After modifying the MCP server code (`main.ts` or its dependencies) by adding/removing tools or changing server settings, Cursor needs to **reload** the MCP server information.
+- If a tool appears as "not found" immediately after adding it, try reloading the MCP server connection in Cursor.
+- Sometimes multiple reloads might be necessary for changes to be fully recognized.
+
+## Environment Variables & Imports
+
+- Be cautious with code that runs immediately upon module import (like top-level environment variable checks in `src/esa_client.ts`).
+- If such code uses `console` or performs actions like `Deno.exit()`, it can prevent the MCP server from starting correctly and cause `Client closed` errors even before any tools are called.
+- Ensure necessary environment variables (`ESA_TOKEN`, `ESA_TEAM_NAME`) are correctly set (e.g., via `.env` and `dotenv`) before starting the server.
+
+## Other Notes (Add as needed)

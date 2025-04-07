@@ -8,7 +8,12 @@
       "include": ["**/*.ts"],
       "exclude": ["node_modules/"]
     },
-    "rules": {}
+    "rules": {
+      "tags": ["recommended"],
+      "include": [
+        "no-console"
+      ]
+    }
   },
   "fmt": {
     "files": {
