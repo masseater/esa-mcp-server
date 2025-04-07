@@ -1,31 +1,9 @@
-import {
-    describe,
-    it,
-    // beforeEach, // Remove spy setup
-    // afterEach,
-} from "@std/testing/bdd";
-import { assertEquals, assertExists, assertRejects } from "@std/assert";
-// import { assertSpyCalls, spy, Spy, restore } from "@std/testing/mock"; // No spies needed
-import { z } from "zod";
-import { err, ok, Result } from "../../esa_client/types.ts";
-import type { EsaPost, UpdatePostBody } from "../../esa_client/types.ts";
-
-// Import the specific implementation details
-import { logic, schema } from "./update.ts";
-
-// // Mock the API function
-// import * as postsApi from "../../esa_client/posts.ts";
+import { /*afterEach, beforeEach,*/ describe, it } from "@std/testing/bdd";
+import { assertEquals } from "@std/assert";
+import type { EsaPost } from "../../esa_client/types.ts";
+import { logic } from "./update.ts";
 
 describe("updatePostLogic", () => {
-    // Remove spy setup
-    // let updatePostSpy: Spy<typeof postsApi>;
-    // beforeEach(() => {
-    //     updatePostSpy = spy(postsApi, "updatePost");
-    // });
-    // afterEach(() => {
-    //     restore();
-    // });
-
     describe("getClientParams", () => {
         it("は、検証済み引数をラップ関数用の正しい形式に変換すること", () => {
             const validatedData = {
@@ -40,13 +18,6 @@ describe("updatePostLogic", () => {
             assertEquals(result, expectedParams);
         });
     });
-
-    // clientFunction tests remain commented out
-    /*
-    describe("clientFunction (wrapped)", () => {
-       ...
-    });
-    */
 
     describe("formatSuccessOutput", () => {
         it("は、更新された投稿の情報を含む成功メッセージを生成すること", () => {

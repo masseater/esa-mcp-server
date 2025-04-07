@@ -30,7 +30,11 @@ async function main() {
 }
 
 if (import.meta.main) {
-    main().catch((err) => {
-        Deno.exit(1);
+    await load({ export: true, allowEmptyValues: true });
+    main().catch(() => {
+        // Errors during startup (like config load) might not have logger yet
+        // console.error("FastMCP Server failed to start:", err);
+        // Deno.exit(1);
+        // エラーは FastMCP が処理するので、ここでは何もしないのだ
     });
 }

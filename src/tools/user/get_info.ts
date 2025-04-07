@@ -1,7 +1,6 @@
 import { z } from "zod";
+import { getUserInfo } from "../../esa_client/user.ts";
 import type { EsaUser } from "../../esa_client/types.ts";
-import { Result } from "../../esa_client/types.ts";
-import { getUserInfo } from "../../esa_client/user.ts"; // Import from user.ts
 import type {
     ApiFunction, // Import ApiFunction
     EsaToolConfig,

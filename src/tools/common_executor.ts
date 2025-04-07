@@ -1,7 +1,8 @@
-import { z, ZodSchema } from "zod";
-import { Result } from "../esa_client/types.ts";
+import type { z, ZodSchema } from "zod";
+import type { Result } from "../esa_client/types.ts";
+import { esaClientConfig } from "../esa_client/config.ts";
+import type { Context /*, FastMCP*/ } from "fastmcp"; // FastMCP を削除
 import type { ApiFunction } from "./types.ts";
-import type { Context, FastMCP } from "fastmcp";
 
 // Type for the function that transforms validated args to client function params
 type GetClientParamsFn<Schema extends ZodSchema<any>, ClientParams> = (

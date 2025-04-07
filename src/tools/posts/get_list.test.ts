@@ -1,10 +1,11 @@
 import {
     describe,
-    it,
-    // beforeEach, // Remove spy setup
+    it, // describe, it を復活
+    // beforeEach,
     // afterEach,
 } from "@std/testing/bdd";
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertExists, assertObjectMatch } from "@std/assert";
+import { returnsNext, stub } from "@std/testing/mock"; // インポートパス確認
 // import { spy, Spy, assertSpyCalls, restore } from "@std/testing/mock"; // No spies needed
 
 // Import the specific implementation details
@@ -16,6 +17,12 @@ import { logic, schema } from "./get_list.ts";
 // Keep relative paths for project internal imports
 import type { GetPostsOptions } from "../../esa_client/types.ts";
 import { z } from "zod"; // Keep z for type inference if needed
+import { ok } from "../../esa_client/types.ts";
+import type {
+    EsaPost,
+    GetPostsResponse,
+    // GetPostsOptions, // 削除
+} from "../../esa_client/types.ts";
 
 // Type alias for inferred schema type
 type GetPostsParams = z.infer<typeof schema>;

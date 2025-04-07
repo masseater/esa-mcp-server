@@ -5,10 +5,13 @@ import {
     // afterEach,
 } from "@std/testing/bdd";
 import { assertEquals, assertStrictEquals } from "@std/assert";
-// import { spy, Spy, assertSpyCalls, restore } from "@std/testing/mock"; // No spies needed
-
-// Import the specific implementation details
-import { logic, schema } from "./delete.ts";
+import {
+    returnsNext,
+    stub,
+} from "https://deno.land/std@0.224.0/testing/mock.ts";
+import { err, ok } from "../../esa_client/types.ts";
+import * as postsApi from "../../esa_client/posts.ts"; // Import API module
+import { logic } from "./delete.ts"; // Import only logic
 
 // // Mock the API function
 // import * as postsApi from "../../esa_client/posts.ts";

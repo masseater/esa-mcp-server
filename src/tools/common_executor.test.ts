@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
-import {
-    assertSpyCalls,
-    restore,
-    Spy,
-    spy,
-    Stub,
-    stub,
-} from "@std/testing/mock";
+import { assertSpyCalls, restore, spy, Stub, stub } from "@std/testing/mock";
 import { z } from "zod";
 import { err, ok, Result } from "../esa_client/types.ts";
 import { createEsaToolExecutor } from "./common_executor.ts";
@@ -42,45 +35,6 @@ const testSchema = z.object({
 type TestSchemaInput = z.infer<typeof testSchema>;
 
 // Mock fetch implementation
-let fetchStub: Stub<typeof globalThis>;
-const mockFetch = async (
-    input: string | URL | Request,
-    init?: RequestInit,
-): Promise<Response> => {
-    const url = input instanceof URL ? input.href : String(input);
-    const method = init?.method?.toUpperCase() ?? "GET";
-
-    // --- Define mock responses based on URL and method ---
-    // Example: Success for testToolSuccess (needs a specific API path)
-    if (url.endsWith("/test/success") && method === "POST") {
-        return new Response(JSON.stringify({ data: "Mocked fetch success!" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-        });
-    }
-    // Example: Success for testToolFormatter
-    if (url.endsWith("/test/formatter") && method === "POST") {
-        return new Response(JSON.stringify({ data: "Formatted Data" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-        });
-    }
-    // Example: API error for testToolApiError
-    if (url.endsWith("/test/api_error") && method === "POST") {
-        return new Response(JSON.stringify({ message: "Mock API Failed" }), {
-            status: 500,
-            statusText: "Internal Server Error",
-            headers: { "Content-Type": "application/json" },
-        });
-    }
-    // Example: Network error (simulate by throwing)
-    if (url.endsWith("/test/network_error")) {
-        throw new Error("Simulated network failure");
-    }
-
-    // Default: Not Found
-    return new Response("Not Found", { status: 404 });
-};
 
 describe("createEsaToolExecutor", () => {
     let mockLogger: ReturnType<typeof createMockLogger>;
@@ -89,8 +43,6 @@ describe("createEsaToolExecutor", () => {
     beforeEach(() => {
         mockLogger = createMockLogger();
         mockContext = createMockContext(mockLogger);
-        // Stub the global fetch before each test
-        fetchStub = stub(globalThis, "fetch", mockFetch);
     });
 
     afterEach(() => {
@@ -255,9 +207,7 @@ describe("createEsaToolExecutor", () => {
 
     it("ネットワークエラー時(fetchモック): エラーをthrowし、errorログを出力する", async () => {
         // Arrange
-        const testApiFn = async (
-            params: { id: number },
-        ): Promise<Result<string, Error>> => {
+        const testApiFn = async (): Promise<Result<string, Error>> => {
             // This fetch call will be mocked to throw
             await fetch(`${esaClientConfig.baseUrl}/test/network_error`);
             return ok("Should not reach here"); // Should not be reached

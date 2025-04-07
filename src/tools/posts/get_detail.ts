@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { EsaPost } from "../../esa_client/types.ts";
-import { Result } from "../../esa_client/types.ts";
 import { getPostDetail } from "../../esa_client/posts.ts";
-import type { EsaToolConfig, EsaToolLogic, EsaToolSchema } from "../types.ts";
+import type { EsaPost } from "../../esa_client/types.ts";
+import type { EsaToolLogic } from "../types.ts";
+import type { EsaToolConfig, EsaToolSchema } from "../types.ts";
 
 // Tool Configuration
 export const config: EsaToolConfig = {

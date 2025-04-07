@@ -3,7 +3,6 @@ import type {
     GetPostsOptions,
     GetPostsResponse,
 } from "../../esa_client/types.ts";
-import { Result } from "../../esa_client/types.ts";
 import { getPosts } from "../../esa_client/posts.ts";
 import type { EsaToolConfig, EsaToolLogic, EsaToolSchema } from "../types.ts";
 

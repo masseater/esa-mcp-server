@@ -4,11 +4,12 @@ import {
     // beforeEach, // Remove spy setup
     // afterEach,
 } from "@std/testing/bdd";
-import { assertEquals, assertStrictEquals } from "@std/assert";
-// import { spy, Spy, assertSpyCalls, restore } from "@std/testing/mock"; // No spies needed
-
-// Import the specific implementation details
-import { logic, schema } from "./get_detail.ts";
+import { assertStrictEquals } from "@std/assert";
+import { returnsNext, stub } from "@std/testing/mock";
+import { err, ok, Result } from "../../esa_client/types.ts";
+import type { EsaPost } from "../../esa_client/types.ts";
+import * as postsApi from "../../esa_client/posts.ts";
+import { logic /*, schema*/ } from "./get_detail.ts"; // schema を削除
 
 // // Mock the API function
 // import * as postsApi from "../../esa_client/posts.ts";

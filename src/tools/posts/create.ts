@@ -1,7 +1,7 @@
 import { z } from "zod";
 // import type { EsaClient, Post } from "../../esa_client/client.ts"; // Removed, client class doesn't exist
 import type { CreatePostBody, EsaPost } from "../../esa_client/types.ts"; // Import correct types
-import { ok, Result } from "../../esa_client/types.ts"; // Import Result types/helpers
+// import { ok, Result } from "../../esa_client/types.ts"; // ok, Result を削除
 // import { createPostBodySchema } from "../../esa_client/schema.ts"; // Schema is likely in posts.ts
 import { createPost } from "../../esa_client/posts.ts"; // Import the API function
 import type { EsaToolConfig, EsaToolLogic, EsaToolSchema } from "../types.ts"; // Import our Tool types

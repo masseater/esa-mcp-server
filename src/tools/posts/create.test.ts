@@ -1,34 +1,15 @@
-import {
-    describe,
-    it,
-    // beforeEach, // Remove spy setup
-    // afterEach,
-} from "@std/testing/bdd";
-import { assertEquals, assertExists } from "@std/assert";
-// import { spy, Spy, assertSpyCalls, restore } from "@std/testing/mock"; // No spies needed here
-import { z } from "zod";
-import type { CreatePostBody, Result } from "../../esa_client/types.ts"; // Correct path
-import { ok } from "../../esa_client/types.ts";
-
-// Import the specific implementation details
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
+import { assertEquals } from "@std/assert";
+import { returnsNext, stub } from "@std/testing/mock";
+import type { EsaPost } from "../../esa_client/types.ts";
+import * as postsApi from "../../esa_client/posts.ts";
 import { logic, schema } from "./create.ts";
-
-// // Mock the API function directly if needed for isolation
-// import * as postsApi from "../../esa_client/posts.ts";
+import { z } from "zod";
 
 // Type alias for inferred schema type
 type CreatePostParams = z.infer<typeof schema>;
 
 describe("createPostLogic", () => {
-    // Remove spy setup
-    // let createPostSpy: Spy<typeof postsApi>;
-    // beforeEach(() => {
-    //     createPostSpy = spy(postsApi, "createPost");
-    // });
-    // afterEach(() => {
-    //     restore();
-    // });
-
     describe("getClientParams", () => {
         it("は、検証済み引数を正しいCreatePostBody形式に変換すること", () => {
             const validatedData = {

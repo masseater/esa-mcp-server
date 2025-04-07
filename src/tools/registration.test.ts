@@ -3,9 +3,6 @@ import { assert, assertEquals, assertExists } from "@std/assert";
 import { assertSpyCalls, restore, Spy, spy } from "@std/testing/mock";
 import type { FastMCP } from "fastmcp";
 
-// Mock ONLY the common executor
-import * as commonExecutor from "./common_executor.ts";
-
 // Import REAL implementations map
 import { implementations } from "./implementations.ts";
 import type { EsaToolImplementation } from "./types.ts";

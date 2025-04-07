@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Result } from "../../esa_client/types.ts";
+// import { Result } from "../../esa_client/types.ts";
 import { deletePost } from "../../esa_client/posts.ts";
 import type { EsaToolConfig, EsaToolLogic, EsaToolSchema } from "../types.ts";
 
