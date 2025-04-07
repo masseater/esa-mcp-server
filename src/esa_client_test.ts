@@ -19,6 +19,8 @@ import {
   getPostDetail, // 今回追加
   createPost, // 今回追加
   CreatePostBody, // 今回追加
+  updatePost, // 今回追加
+  UpdatePostBody, // 今回追加
 } from "./esa_client.ts";
 
 /* 不要なので削除
@@ -352,3 +354,125 @@ Deno.test("createPost should return an error if post title is missing", async ()
 */
 
 // --- ここまで createPost のテスト ---
+
+// --- ここから updatePost のテスト ---
+
+Deno.test("updatePost should update an existing post", async (t) => {
+  // t を使うとステップ実行できるのだ
+  // --- Step 1: Create a post to update ---
+  const timestampCreate = new Date().toISOString();
+  const initialPostData: CreatePostBody = {
+    post: {
+      name: `[Test] Post to Update ${timestampCreate}`,
+      body_md: "Initial content.",
+      tags: ["test", "update-target"],
+      wip: true,
+      message: "Creating post for update test",
+    },
+  };
+
+  let createdPostNumber: number | undefined; // 更新対象の記事番号を保持
+
+  await t.step("Create initial post", async () => {
+    const createResult = await createPost(initialPostData);
+    assertOk(createResult, "テスト用記事の作成が成功すること");
+    createdPostNumber = createResult.value.number;
+    console.log(` -> Created post #${createdPostNumber} for update test.`);
+  });
+
+  // --- Step 2: Update the created post ---
+  await t.step("Update the post", async () => {
+    assertExists(createdPostNumber, "作成された記事番号が取得できていること");
+
+    const timestampUpdate = new Date().toISOString();
+    const updateData: UpdatePostBody = {
+      post: {
+        name: `[Test] Updated Post ${timestampUpdate}`, // タイトル変更
+        body_md: `Updated content at ${timestampUpdate}.`, // 本文変更
+        tags: ["test", "updated"], // タグ変更
+        wip: false, // WIP解除
+        message: "Updating the test post", // 更新メッセージ (必須)
+      },
+    };
+
+    const updateResult = await updatePost(createdPostNumber, updateData);
+
+    // Assert
+    assertOk(updateResult, `記事(No.${createdPostNumber})の更新が成功すること`);
+    const updatedPost = updateResult.value;
+
+    assertEquals(
+      updatedPost.number,
+      createdPostNumber,
+      "記事番号が変わらないこと"
+    );
+    assertEquals(
+      updatedPost.name,
+      updateData.post.name,
+      "更新後のタイトルが指定通りであること"
+    );
+    assertEquals(
+      updatedPost.body_md, // 更新APIは本文の改行などをそのまま返すことが多いはず
+      updateData.post.body_md,
+      "更新後の本文が指定通りであること"
+    );
+    assertEquals(
+      updatedPost.wip,
+      false,
+      "更新後のWIPフラグが指定通り(false)であること"
+    );
+    // 配列の比較は順序も含む assertEquals を使うのが確実なのだ
+    assertEquals(
+      updatedPost.tags,
+      ["test", "updated"],
+      "更新後のタグが指定通りであること"
+    );
+    assertEquals(
+      updatedPost.message,
+      updateData.post.message,
+      "更新後のメッセージが指定通りであること" // APIは通常、リクエスト時のメッセージを返す
+    );
+
+    console.log(
+      `✅ [Test Success] Post updated: #${updatedPost.number} "${updatedPost.name}"`
+    );
+  });
+
+  // --- Step 3: Cleanup (Optional but recommended) ---
+  await t.step("Cleanup (Manual Deletion Required)", () => {
+    console.warn(
+      `⚠️ Cleanup required: Please manually delete post #${createdPostNumber} on esa.io.`
+    );
+    // 将来 deletePost が実装されたら、ここで呼び出すのだ
+    // const deleteResult = await deletePost(createdPostNumber);
+    // assertOk(deleteResult, "テスト記事の削除が成功すること");
+  });
+});
+
+Deno.test(
+  "updatePost should return an error if message is missing",
+  async () => {
+    // Arrange
+    const postNumber = 1; // 既存の記事番号 (テスト用。存在すれば何でも良い)
+    const updateDataWithoutMessage: UpdatePostBody = {
+      post: {
+        name: "[Test] Update without message",
+        // message を意図的に省略
+      },
+    };
+
+    // Act
+    const result = await updatePost(postNumber, updateDataWithoutMessage);
+
+    // Assert
+    assert(!result.ok, "メッセージがない場合はエラーが返ること");
+    assert(result.error instanceof Error);
+    assert(
+      result.error.message.includes("Update message is required"),
+      "エラーメッセージに'Update message is required'が含まれること"
+    );
+    console.log(`✅ [Test Success] Correctly handled missing update message.`);
+  }
+);
+
+// --- ここまで updatePost のテスト ---

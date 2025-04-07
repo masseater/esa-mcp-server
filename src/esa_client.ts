@@ -354,6 +354,93 @@ export async function createPost(
   }
 }
 
+/**
+ * 記事更新APIのリクエストボディの型
+ * CreatePostBody と似ているが、更新なので name は必須ではない。
+ * @see https://docs.esa.io/posts/102#PATCH /v1/teams/:team_name/posts/:post_number
+ */
+export interface UpdatePostBody {
+  post: {
+    name?: string; // 新しい記事タイトル (省略可能)
+    body_md?: string; // 新しいMarkdown本文 (省略可能)
+    tags?: string[]; // 新しいタグ名の配列 (省略可能)
+    category?: string; // 新しいカテゴリ (省略可能)
+    wip?: boolean; // WIP状態の変更 (省略可能)
+    message?: string; // 編集時のメッセージ (必須)
+    // updated_by?: string; // 更新者を screen_name で指定可能 (optional)
+    original_revision?: {
+      // 編集競合防止用 (optional)
+      body_md: string;
+      number: number;
+      user: string;
+    };
+  };
+}
+
+/**
+ * esa.io API で既存の記事を更新する関数なのだ
+ */
+export async function updatePost(
+  postNumber: number,
+  postData: UpdatePostBody
+): Promise<Result<EsaPost, Error>> {
+  // 戻り値は更新された記事情報
+  if (postNumber <= 0) {
+    return err(new Error("Invalid post number. Must be greater than 0."));
+  }
+  // 更新内容が空でないかチェック (何か一つは指定されているべき)
+  if (!postData?.post || Object.keys(postData.post).length === 0) {
+    return err(new Error("No update data provided for the post."));
+  }
+  // message は必須 (API仕様より)
+  if (!postData.post.message) {
+    // 自動でメッセージを生成するか、エラーにするか。ここではエラーにする。
+    return err(new Error("Update message is required when updating a post."));
+  }
+
+  const url = `${esaClientConfig.baseUrl}/posts/${postNumber}`;
+  console.log(`[API Request] PATCH ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: "PATCH", // 更新なので PATCH メソッド
+      headers: esaClientConfig.headers,
+      body: JSON.stringify(postData),
+    });
+
+    if (!response.ok) {
+      // 成功は 200 OK
+      const errorBody = await response
+        .text()
+        .catch(() => "(Failed to read error body)");
+      console.error(
+        `[API Error] Failed to update post #${postNumber}: ${response.status} ${response.statusText}`,
+        `URL: ${url}`,
+        `Request Body: ${JSON.stringify(postData)}`
+      );
+      return err(
+        new Error(
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
+        )
+      );
+    }
+
+    const updatedPost: EsaPost = await response.json();
+    console.log(
+      `[API Success] Post updated: #${updatedPost.number} "${updatedPost.name}"`
+    );
+    return ok(updatedPost);
+  } catch (error) {
+    console.error(
+      `[Network Error] Failed to update post #${postNumber}:`,
+      error
+    );
+    return err(
+      error instanceof Error ? error : new Error("Unknown network error")
+    );
+  }
+}
+
 // --- ここまで追加 ---
 
 // console.log("esa.io API クライアント設定完了なのだ！"); // 動作確認用なのでコメントアウトしても良いのだ
