@@ -1,21 +1,37 @@
 import { FastMCP } from "fastmcp";
-// Remove direct client imports if no longer needed here
-// import { z } from "zod"; // Remove if schemas are fully moved
-// Remove client function imports
-import { registerUserTools } from "./src/tools/user.ts";
-import { registerPostTools } from "./src/tools/posts.ts";
+import { load } from "dotenv";
+import { registerEsaTools } from "./src/tools/registration.ts";
+// import { registerPostTools } from "./src/tools/posts.ts";
+// import { registerUserTools } from "./src/tools/user.ts";
 
-const server = new FastMCP({
-    name: "esa-mcp",
-    version: "1.0.0",
-});
+async function main() {
+    // Load environment variables from .env file
+    await load({ export: true, allowEmptyValues: true });
 
-// Register tools using the imported functions
-registerUserTools(server);
-registerPostTools(server);
+    // Create FastMCP server instance with config
+    const server = new FastMCP({
+        name: "esa-mcp-server", // Provide a name
+        version: "0.1.0", // Provide a version
+    });
 
-// Remove all old server.addTool calls and schema definitions
+    // Register all tools using the unified function
+    registerEsaTools(server);
 
-server.start({
-    transportType: "stdio",
-});
+    // Old registration calls - remove these
+    // server.log.info("Registering Post tools...");
+    // registerPostTools(server);
+    // server.log.info("Registering User tools...");
+    // registerUserTools(server);
+
+    // Start the server using stdio transport
+    await server.start({
+        transportType: "stdio",
+    });
+}
+
+if (import.meta.main) {
+    main().catch((err) => {
+        console.error("Server error:", err);
+        Deno.exit(1);
+    });
+}

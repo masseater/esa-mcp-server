@@ -70,3 +70,11 @@ esa.ioのAPIについては https://docs.esa.io/posts/102 を参照。
 - Ensure necessary environment variables (`ESA_TOKEN`, `ESA_TEAM_NAME`) are correctly set (e.g., via `.env` and `dotenv`) before starting the server.
 
 ## Other Notes (Add as needed)
+
+# Prioritize Lint/Format Errors
+
+Address linter and formatter errors immediately when they arise. Do not proceed with other tasks until these errors are resolved.
+
+# Periodically Check Formatting and Linting
+
+Remember to periodically run `deno task check` (or equivalent command like `deno fmt && deno lint`) to ensure code quality and consistency.
