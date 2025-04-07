@@ -15,11 +15,14 @@ export function registerEsaTools(server: FastMCP): void {
         const toolImpl = impl as EsaToolImplementation;
 
         if (!toolImpl.config || !toolImpl.schema || !toolImpl.logic) {
-            // Cannot use context.log here
-            console.error( // Fallback to console.error, might be noisy
-                `Tool registration skipped: Implementation for key '${key}' is incomplete (missing config, schema, or logic).`,
+            // console.error( // Fallback to console.error, might be noisy // 削除
+            //     `Tool registration skipped: Implementation for key '${key}' is incomplete (missing config, schema, or logic).`,
+            // );
+            // continue; // 削除
+            // エラーを throw して登録プロセスを停止させるのだ
+            throw new Error(
+                `Tool registration failed: Implementation for key '${key}' is incomplete (missing config, schema, or logic).`,
             );
-            continue;
         }
 
         try {
@@ -37,11 +40,17 @@ export function registerEsaTools(server: FastMCP): void {
             // Cannot use context.log here
             // console.debug(`Registered tool: ${toolImpl.config.name}`);
         } catch (error) {
-            // Cannot use context.log here
-            console.error( // Fallback to console.error
+            // console.error( // Fallback to console.error // 削除
+            //     `Failed to register tool '${toolImpl.config.name}' (key: ${key}): ${
+            //         error instanceof Error ? error.message : error
+            //     }`,
+            // );
+            // エラーを再 throw して問題を明確にするのだ
+            throw new Error(
                 `Failed to register tool '${toolImpl.config.name}' (key: ${key}): ${
-                    error instanceof Error ? error.message : error
+                    error instanceof Error ? error.message : String(error)
                 }`,
+                { cause: error }, // 元のエラーを保持
             );
         }
     }

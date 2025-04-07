@@ -9,12 +9,10 @@ const ESA_TEAM_NAME = Deno.env.get("ESA_TEAM_NAME");
 
 // トークンとチーム名が設定されているか確認するのだ
 if (!ESA_TOKEN) {
-    console.error("Error: ESA_TOKEN is not defined in the environment.");
-    Deno.exit(1); // エラーで終了するのだ
+    throw new Error("Error: ESA_TOKEN is not defined in the environment.");
 }
 if (!ESA_TEAM_NAME) {
-    console.error("Error: ESA_TEAM_NAME is not defined in the environment.");
-    Deno.exit(1); // エラーで終了するのだ
+    throw new Error("Error: ESA_TEAM_NAME is not defined in the environment.");
 }
 
 // ベースURLとヘッダーを作成するのだ
@@ -30,9 +28,4 @@ export const esaClientConfig = {
     headers: AUTH_HEADERS,
 };
 
-// 初期化時にトークンとチーム名の一部を表示 (デバッグ用、必要なら削除)
-// 注意: トークン全体をログに出さないようにする！
-console.info(`esa.io Client Initialized for team: ${ESA_TEAM_NAME}`);
-console.info(
-    `Using Token starting with: ${ESA_TOKEN.substring(0, 4)}...`,
-);
+// Initialization messages - remove console usage

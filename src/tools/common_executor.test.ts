@@ -49,7 +49,6 @@ const mockFetch = async (
 ): Promise<Response> => {
     const url = input instanceof URL ? input.href : String(input);
     const method = init?.method?.toUpperCase() ?? "GET";
-    console.log(`Mock fetch called: ${method} ${url}`); // Log fetch calls for debugging
 
     // --- Define mock responses based on URL and method ---
     // Example: Success for testToolSuccess (needs a specific API path)

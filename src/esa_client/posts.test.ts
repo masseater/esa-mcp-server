@@ -111,7 +111,7 @@ Deno.test("createPost - API error", async () => {
     );
 
     // テスト対象の関数を呼び出す
-    const postBody: CreatePostBody = { post: { name: "" } }; // 不正なリクエストの例
+    const postBody: CreatePostBody = { post: { name: "", body_md: "" } }; // 不正なリクエストの例
     const result = await createPost(postBody);
 
     // 結果を検証 (err が返ることを期待)
@@ -142,7 +142,7 @@ Deno.test("createPost - network error", async () => {
 
     // テスト対象の関数を呼び出す
     const postBody: CreatePostBody = {
-        post: { name: "Test Post" },
+        post: { name: "Test Post", body_md: "" },
     };
     const result = await createPost(postBody);
 
@@ -527,8 +527,18 @@ Deno.test("getPostDetail - success", async () => {
         tags: [],
         category: null,
         revision_number: 1,
-        created_by: {/* ... */} as any,
-        updated_by: {/* ... */} as any,
+        created_by: {
+            myself: false,
+            name: "Other User",
+            screen_name: "otheruser",
+            icon: "icon_url2",
+        },
+        updated_by: {
+            myself: false,
+            name: "Other User",
+            screen_name: "otheruser",
+            icon: "icon_url2",
+        },
     };
 
     const fetchStub = stub(

@@ -1,13 +1,11 @@
 import { esaClientConfig } from "./config.ts";
 import type {
     CreatePostBody,
-    CreatePostResponse,
     EsaPost,
     GetPostsOptions,
     GetPostsResponse,
     Result,
     UpdatePostBody,
-    UpdatePostResponse,
 } from "./types.ts";
 import { err, ok } from "./types.ts";
 
@@ -141,13 +139,17 @@ export async function deletePost(
  */
 export async function createPost(
     body: CreatePostBody,
-): Promise<Result<CreatePostResponse, Error>> {
+): Promise<Result<EsaPost, Error>> {
     const url = `${esaClientConfig.baseUrl}/posts`;
 
     try {
         const response = await fetch(url, {
             method: "POST",
-            headers: esaClientConfig.headers,
+            headers: {
+                ...esaClientConfig.headers,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
             body: JSON.stringify(body),
         });
 
@@ -162,7 +164,7 @@ export async function createPost(
             );
         }
 
-        const createdPost: CreatePostResponse = await response.json();
+        const createdPost: EsaPost = await response.json();
         return ok(createdPost);
     } catch (error) {
         return err(
@@ -177,7 +179,7 @@ export async function createPost(
 export async function updatePost(
     postNumber: number,
     body: UpdatePostBody,
-): Promise<Result<UpdatePostResponse, Error>> {
+): Promise<Result<EsaPost, Error>> {
     if (postNumber <= 0) {
         return err(new Error("Invalid post number. Must be greater than 0."));
     }
@@ -191,7 +193,11 @@ export async function updatePost(
     try {
         const response = await fetch(url, {
             method: "PATCH",
-            headers: esaClientConfig.headers,
+            headers: {
+                ...esaClientConfig.headers,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
             body: JSON.stringify(body),
         });
 
@@ -206,7 +212,7 @@ export async function updatePost(
             );
         }
 
-        const updatedPost: UpdatePostResponse = await response.json();
+        const updatedPost: EsaPost = await response.json();
         return ok(updatedPost);
     } catch (error) {
         return err(
