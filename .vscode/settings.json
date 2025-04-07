@@ -1,6 +1,6 @@
 {
-  "deno.enable": true,
-  "editor.defaultFormatter": "denoland.vscode-deno",
-  "deno.config": "./deno.jsonc",
-  "deno.lint": true
+    "deno.enable": true,
+    "editor.defaultFormatter": "denoland.vscode-deno",
+    "deno.config": "./deno.jsonc",
+    "deno.lint": true
 }

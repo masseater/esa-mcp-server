@@ -31,7 +31,6 @@ async function main() {
 
 if (import.meta.main) {
     main().catch((err) => {
-        console.error("Server error:", err);
         Deno.exit(1);
     });
 }
