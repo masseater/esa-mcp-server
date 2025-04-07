@@ -36,7 +36,7 @@ esa.ioのAPIについては https://docs.esa.io/posts/102 を参照。
 
 *   フェーズごとに `git commit`
 *   TDD (テスト駆動開発)
-*   **こまめにテスト (`deno test`) とフォーマット/リントチェック (`deno fmt`, `deno lint` or Biome commands) を実行するのだ**
+*   **コードを修正したら型情報のチェック(`deno check`)と、テスト (`deno test`) とフォーマット/リントチェック (`deno fmt`, `deno lint` or Biome commands) を実行するのだ**
 *   必要に応じて機能追加 (コメント等)
 *   サーバーのドキュメント作成
 
