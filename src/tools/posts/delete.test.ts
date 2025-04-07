@@ -1,31 +1,14 @@
-import {
-    describe,
-    it,
-    // beforeEach, // Remove spy setup
-    // afterEach,
-} from "@std/testing/bdd";
+import { describe, it } from "@std/testing/bdd";
 import { assertEquals, assertStrictEquals } from "@std/assert";
 import {
     returnsNext,
     stub,
 } from "https://deno.land/std@0.224.0/testing/mock.ts";
 import { err, ok } from "../../esa_client/types.ts";
-import * as postsApi from "../../esa_client/posts.ts"; // Import API module
-import { logic } from "./delete.ts"; // Import only logic
-
-// // Mock the API function
-// import * as postsApi from "../../esa_client/posts.ts";
+import * as postsApi from "../../esa_client/posts.ts";
+import { logic } from "./delete.ts";
 
 describe("deletePostLogic", () => {
-    // Remove spy setup
-    // let deletePostSpy: Spy<typeof postsApi>;
-    // beforeEach(() => {
-    //     deletePostSpy = spy(postsApi, "deletePost");
-    // });
-    // afterEach(() => {
-    //     restore();
-    // });
-
     describe("getClientParams", () => {
         it("は、検証済み引数からpostNumberを正しく抽出すること", () => {
             const validatedData = { post_number: 123 };

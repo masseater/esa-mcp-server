@@ -1,28 +1,19 @@
 import type { z, ZodSchema } from "zod";
 import type { Result } from "../esa_client/types.ts";
 import { esaClientConfig } from "../esa_client/config.ts";
-import type { Context /*, FastMCP*/ } from "fastmcp"; // FastMCP を削除
+import type { Context } from "fastmcp";
 import type { ApiFunction } from "./types.ts";
 
-// Type for the function that transforms validated args to client function params
 type GetClientParamsFn<Schema extends ZodSchema<any>, ClientParams> = (
     validatedArgs: z.infer<Schema>,
 ) => ClientParams | undefined;
 
-// Type for the underlying esa.io client function
-// type ClientFunction<ClientParams, ClientResult> = (
-//     params: ClientParams,
-// ) => Promise<Result<ClientResult, Error>>;
-
-// Type for the function that formats the successful result
 type FormatSuccessOutputFn<Schema extends z.ZodSchema<any>, ClientResult> = (
     resultValue: ClientResult,
-    // validatedArgs: z.infer<Schema>, // validatedArgs might not be needed here
 ) => string;
 
-// Options for the executor creator
 interface CreateExecutorOptions<
-    Schema extends z.ZodTypeAny, // Use ZodTypeAny which is more general
+    Schema extends z.ZodTypeAny,
     ClientResult,
     ClientParams,
 > {
@@ -34,23 +25,15 @@ interface CreateExecutorOptions<
     formatSuccessOutput?: (result: ClientResult) => string;
 }
 
-// Define a type alias for the specific context we expect (no auth)
 type EsaToolContext = Context<undefined>;
 
-// Type for the returned execute function - use EsaToolContext
 type ExecuteFunction<Schema extends z.ZodTypeAny> = (
     validatedArgs: z.infer<Schema>,
     context: EsaToolContext,
 ) => Promise<string>;
 
-/**
- * Creates the `execute` function for an esa.io tool, handling common logic.
- *
- * @param options Configuration for creating the executor.
- * @returns The async execute function to be used with `server.addTool`.
- */
 export function createEsaToolExecutor<
-    Schema extends z.ZodTypeAny, // Use ZodTypeAny
+    Schema extends z.ZodTypeAny,
     ClientResult,
     ClientParams,
 >(
@@ -73,7 +56,6 @@ export function createEsaToolExecutor<
         }
         log.info(`Executing tool: ${toolName} with args: ${argsForLog}`);
 
-        // 1. Prepare Parameters (can throw)
         let clientParams: ClientParams | undefined;
         try {
             clientParams = getClientParams(validatedArgs);
@@ -85,24 +67,19 @@ export function createEsaToolExecutor<
             log.error(
                 `Error preparing client params for ${toolName}: ${errorMessage}`,
             );
-            // Throw specific error for param failure
             throw new Error(
                 `Parameter preparation failed for ${toolName}: ${errorMessage}`,
             );
         }
 
-        // 2. Call API and Handle Result/Errors (can throw)
         try {
             let result: Result<ClientResult, Error>;
-            // Special handling for updatePost
             if (toolName === "mcp_esa_server_update_post") {
                 const updateParams = clientParams as {
                     postNumber: number;
                     body: any;
                 };
                 if (!updateParams) {
-                    // This case should ideally be caught by schema validation
-                    // or getClientParams, but added defense here.
                     throw new Error(
                         "Internal error: Client params undefined for updatePost despite preparation.",
                     );
@@ -130,43 +107,35 @@ export function createEsaToolExecutor<
                         output?.length ?? 0
                     }`,
                 );
-                return output; // Success path
+                return output;
             } else {
-                // API returned an error Result
                 log.error(
                     `[${toolName}] API Error: ${result.error.message}`,
-                ); // Log API error
-                // Throw specific error for API failure
+                );
                 throw new Error(
                     `API call failed for ${toolName}: ${result.error.message}`,
                 );
             }
         } catch (error) {
-            // Catch errors from API call (network etc.) OR the re-thrown errors above
             const errorMessage = error instanceof Error
                 ? error.message
                 : String(error);
 
-            // Check if the error message indicates it was already logged specifically
             const alreadyLogged = errorMessage.startsWith(
                 `Parameter preparation failed for ${toolName}:`,
             ) ||
                 errorMessage.startsWith(`API call failed for ${toolName}:`);
 
             if (!alreadyLogged) {
-                // Log only *truly* unexpected errors here (e.g., network, apiFn internal throws)
                 log.error(
                     `Unexpected error during ${toolName} execution: ${errorMessage}`,
                     error instanceof Error ? { stack: error.stack } : undefined,
                 );
             }
 
-            // Always re-throw the error to signal failure to the caller (FastMCP)
-            // Throw the original error object if it's an Error instance, otherwise wrap it.
             if (error instanceof Error) {
                 throw error;
             } else {
-                // Wrap non-Error types before throwing
                 throw new Error(
                     `Execution failed for ${toolName}: ${errorMessage}`,
                 );

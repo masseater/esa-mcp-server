@@ -7,10 +7,8 @@ import { createEsaToolExecutor } from "./common_executor.ts";
 import type { Context } from "fastmcp";
 import { esaClientConfig } from "../esa_client/config.ts";
 
-// Define a type alias for the specific context we expect (no auth)
 type EsaToolContext = Context<undefined>;
 
-// Mock Logger
 const createMockLogger = () => ({
     debug: spy(),
     error: spy(),
@@ -18,7 +16,6 @@ const createMockLogger = () => ({
     warn: spy(),
 });
 
-// Mock Context
 const createMockContext = (
     mockLogger: ReturnType<typeof createMockLogger>,
 ): EsaToolContext => ({
@@ -27,14 +24,12 @@ const createMockContext = (
     log: mockLogger as any,
 });
 
-// Basic Test Schema
 const testSchema = z.object({
     id: z.number(),
     name: z.string().optional(),
 });
 type TestSchemaInput = z.infer<typeof testSchema>;
 
-// Mock fetch implementation
 const mockFetch = async (
     input: string | URL | Request,
     init?: RequestInit,
@@ -42,27 +37,25 @@ const mockFetch = async (
     const url = input instanceof URL
         ? input.href
         : input instanceof Request
-        ? input.url // Request オブジェクトから URL を取得
+        ? input.url
         : String(input);
     const method = init?.method?.toUpperCase() ??
-        (input instanceof Request ? input.method.toUpperCase() : "GET"); // Request から method を取得
+        (input instanceof Request ? input.method.toUpperCase() : "GET");
 
-    // --- Define mock responses based on URL and method ---
-    // Example: Success for testToolSuccess (needs a specific API path)
     if (url.endsWith("/test/success") && method === "POST") {
         return new Response(JSON.stringify({ data: "Mocked fetch success!" }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
         });
     }
-    // Example: Success for testToolFormatter
+
     if (url.endsWith("/test/formatter") && method === "POST") {
         return new Response(JSON.stringify({ data: "Formatted Data" }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
         });
     }
-    // Example: API error for testToolApiError
+
     if (url.endsWith("/test/api_error") && method === "POST") {
         return new Response(JSON.stringify({ message: "Mock API Failed" }), {
             status: 500,
@@ -70,12 +63,11 @@ const mockFetch = async (
             headers: { "Content-Type": "application/json" },
         });
     }
-    // Example: Network error (simulate by throwing)
+
     if (url.endsWith("/test/network_error")) {
         throw new Error("Simulated network failure");
     }
 
-    // Default: Not Found (どの条件にも一致しない場合)
     return new Response("Not Found", { status: 404 });
 };
 
@@ -90,17 +82,13 @@ describe("createEsaToolExecutor", () => {
     });
 
     afterEach(() => {
-        // Restore fetch and other spies/stubs
         restore();
     });
 
     it("成功時: 実際のapiFn(fetchをモック)を呼び出し、結果を返し、ログを出力する", async () => {
-        // Arrange
-        // Define a realistic ApiFunction that would call fetch
         const testApiFn = async (
             params: { value: number },
         ): Promise<Result<{ data: string }, Error>> => {
-            // This function simulates calling fetch, which is now mocked
             const response = await fetch(
                 `${esaClientConfig.baseUrl}/test/success`,
                 {
@@ -121,27 +109,25 @@ describe("createEsaToolExecutor", () => {
 
         const executor = createEsaToolExecutor({
             toolName: "testToolSuccessFetch",
-            apiFn: testApiFn, // Use the function that calls fetch
+            apiFn: testApiFn,
             getClientParams: getClientParamsFn,
         });
 
-        // Act
         const result = await executor({ id: 10 }, mockContext);
 
-        // Assert
         assertSpyCalls(getClientParamsFn, 1);
-        // fetchStub doesn't track calls like spy, check result based on mockFetch
+
         assertEquals(result, JSON.stringify({ data: "Mocked fetch success!" }));
-        // Check logs - EXPECTED: info(start), debug(params), debug(result status), info(success)
+
         assertSpyCalls(mockLogger.info, 2);
         assertSpyCalls(mockLogger.debug, 2);
         assertSpyCalls(mockLogger.error, 0);
-        // Verify the first info log message content
+
         assertStringIncludes(
             mockLogger.info.calls[0].args[0],
             "Executing tool: testToolSuccessFetch",
         );
-        // Verify the second info log message content
+
         assertStringIncludes(
             mockLogger.info.calls[1].args[0],
             "Execution successful",
@@ -149,7 +135,6 @@ describe("createEsaToolExecutor", () => {
     });
 
     it("成功時(カスタムフォーマッタ): fetchモックとフォーマッタで結果を返す", async () => {
-        // Arrange
         const testApiFn = async (
             params: { value: number },
         ): Promise<Result<{ data: string }, Error>> => {
@@ -179,24 +164,21 @@ describe("createEsaToolExecutor", () => {
             formatSuccessOutput: formatSuccessFn,
         });
 
-        // Act
         const result = await executor({ id: 5, name: "test" }, mockContext);
 
-        // Assert
         assertSpyCalls(getClientParamsFn, 1);
         assertSpyCalls(formatSuccessFn, 1);
         assertEquals(formatSuccessFn.calls[0].args[0], {
             data: "Formatted Data",
-        }); // Check formatter input
-        assertEquals(result, "Formatted: Formatted Data"); // Check final output
-        // Check logs - EXPECTED: info(start), debug(params), debug(result status), info(success)
+        });
+        assertEquals(result, "Formatted: Formatted Data");
+
         assertSpyCalls(mockLogger.info, 2);
         assertSpyCalls(mockLogger.debug, 2);
         assertSpyCalls(mockLogger.error, 0);
     });
 
     it("APIエラー時(fetchモック): エラーをthrowし、errorログを出力する", async () => {
-        // Arrange
         const testApiFn = async (
             params: null | undefined,
         ): Promise<Result<string, Error>> => {
@@ -207,7 +189,7 @@ describe("createEsaToolExecutor", () => {
                     body: JSON.stringify(params),
                 },
             );
-            // Logic to handle error response
+
             if (!response.ok) {
                 const errorBody = await response.json().catch(() => ({
                     message: "Unknown error format",
@@ -218,7 +200,7 @@ describe("createEsaToolExecutor", () => {
                     ),
                 );
             }
-            return ok(await response.json()); // Should not happen in this test
+            return ok(await response.json());
         };
         const getClientParamsFn = spy(
             (_validatedData: TestSchemaInput): null | undefined => null,
@@ -230,16 +212,15 @@ describe("createEsaToolExecutor", () => {
             getClientParams: getClientParamsFn,
         });
 
-        // Act & Assert
         await assertRejects(
             async () => {
                 await executor({ id: 1 }, mockContext);
             },
             Error,
-            "API call failed for testToolApiErrorFetch: Mock API Failed", // Message from mocked fetch response body
+            "API call failed for testToolApiErrorFetch: Mock API Failed",
         );
         assertSpyCalls(getClientParamsFn, 1);
-        // Check logs - EXPECTED: info(start), debug(params), debug(result status), error(api)
+
         assertSpyCalls(mockLogger.info, 1);
         assertSpyCalls(mockLogger.debug, 2);
         assertSpyCalls(mockLogger.error, 1);
@@ -250,11 +231,9 @@ describe("createEsaToolExecutor", () => {
     });
 
     it("ネットワークエラー時(fetchモック): エラーをthrowし、errorログを出力する", async () => {
-        // Arrange
         const testApiFn = async (): Promise<Result<string, Error>> => {
-            // This fetch call will be mocked to throw
             await fetch(`${esaClientConfig.baseUrl}/test/network_error`);
-            return ok("Should not reach here"); // Should not be reached
+            return ok("Should not reach here");
         };
         const getClientParamsFn = spy((validatedData: TestSchemaInput) => ({
             id: validatedData.id,
@@ -266,7 +245,6 @@ describe("createEsaToolExecutor", () => {
             getClientParams: getClientParamsFn,
         });
 
-        // Act & Assert
         await assertRejects(
             async () => {
                 await executor({ id: 2 }, mockContext);
@@ -275,7 +253,7 @@ describe("createEsaToolExecutor", () => {
             "Simulated network failure",
         );
         assertSpyCalls(getClientParamsFn, 1);
-        // Check logs - EXPECTED: info(start), debug(params), error(unexpected)
+
         assertSpyCalls(mockLogger.info, 1);
         assertSpyCalls(mockLogger.debug, 1);
         assertSpyCalls(mockLogger.error, 1);
@@ -286,20 +264,18 @@ describe("createEsaToolExecutor", () => {
     });
 
     it("予期せぬエラー時(getClientParams throw): エラーをthrowし、errorログを出力する", async () => {
-        // Arrange
         const paramsError = new Error("Params creation failed");
-        const mockApiFn = spy(); // Should not be called, keep simple spy
+        const mockApiFn = spy();
         const getClientParamsFn = spy((_validatedData: TestSchemaInput) => {
             throw paramsError;
         });
 
         const executor = createEsaToolExecutor({
             toolName: "testToolParamError",
-            apiFn: mockApiFn as any, // Cast to satisfy type, won't be called
+            apiFn: mockApiFn as any,
             getClientParams: getClientParamsFn,
         });
 
-        // Act & Assert
         await assertRejects(
             async () => {
                 await executor({ id: 3 }, mockContext);
@@ -309,7 +285,7 @@ describe("createEsaToolExecutor", () => {
         );
         assertSpyCalls(getClientParamsFn, 1);
         assertSpyCalls(mockApiFn, 0);
-        // Check logs - EXPECTED: info(start), error(params prep)
+
         assertSpyCalls(mockLogger.info, 1);
         assertSpyCalls(mockLogger.debug, 0);
         assertSpyCalls(mockLogger.error, 1);

@@ -130,9 +130,6 @@ export interface UpdatePostBody {
  */
 export type UpdatePostResponse = EsaPost;
 
-// --- エラー関連型定義 (必要であれば追加) ---
-// 例: export type ApiError = { status: number; message: string; };
-
 export type User = {
     name: string;
     screen_name: string;

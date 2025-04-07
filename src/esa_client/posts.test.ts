@@ -1,11 +1,9 @@
-// Standard library imports
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
     returnsNext,
     stub,
 } from "https://deno.land/std@0.224.0/testing/mock.ts";
 
-// Import functions under test from posts.ts
 import {
     createPost,
     deletePost,
@@ -14,7 +12,6 @@ import {
     updatePost,
 } from "./posts.ts";
 
-// Import types and helpers from types.ts
 import type {
     CreatePostBody,
     EsaPost,
@@ -22,13 +19,9 @@ import type {
     GetPostsResponse,
     UpdatePostBody,
 } from "./types.ts";
-import { ok } from "./types.ts"; // ok helper is needed for assertions
+import { ok } from "./types.ts";
 
-// --- Test Cases for Post related functions ---
-
-// createPost のテストケース
 Deno.test("createPost - success", async () => {
-    // モックするレスポンスデータ
     const mockResponse: EsaPost = {
         number: 123,
         name: "Test Post",
@@ -57,52 +50,46 @@ Deno.test("createPost - success", async () => {
         },
     };
 
-    // fetch をスタブ化し、成功レスポンス (201 Created) を返すようにするのだ
     const fetchStub = stub(
         globalThis,
         "fetch",
         returnsNext([
             Promise.resolve(
                 new Response(JSON.stringify(mockResponse), {
-                    status: 201, // Created
+                    status: 201,
                     headers: { "Content-Type": "application/json" },
                 }),
             ),
         ]),
     );
 
-    // テスト対象の関数を呼び出す
     const postBody: CreatePostBody = {
         post: { name: "Test Post", body_md: "This is a test." },
     };
     const result = await createPost(postBody);
 
-    // 結果を検証
     assertEquals(
         result,
         ok(mockResponse),
         "記事作成が成功し、正しいResultが返ること",
     );
 
-    // スタブを元に戻す
     fetchStub.restore();
 });
 
 Deno.test("createPost - API error", async () => {
-    // モックするエラーレスポンス
     const errorBody = JSON.stringify({
         error: "invalid_parameter",
         message: "Name is required",
     });
 
-    // fetch をスタブ化し、失敗レスポンス (400 Bad Request) を返すようにするのだ
     const fetchStub = stub(
         globalThis,
         "fetch",
         returnsNext([
             Promise.resolve(
                 new Response(errorBody, {
-                    status: 400, // Bad Request
+                    status: 400,
                     statusText: "Bad Request",
                     headers: { "Content-Type": "application/json" },
                 }),
@@ -110,11 +97,9 @@ Deno.test("createPost - API error", async () => {
         ]),
     );
 
-    // テスト対象の関数を呼び出す
-    const postBody: CreatePostBody = { post: { name: "", body_md: "" } }; // 不正なリクエストの例
+    const postBody: CreatePostBody = { post: { name: "", body_md: "" } };
     const result = await createPost(postBody);
 
-    // 結果を検証 (err が返ることを期待)
     assertEquals(
         result.ok,
         false,
@@ -128,25 +113,21 @@ Deno.test("createPost - API error", async () => {
         );
     }
 
-    // スタブを元に戻す
     fetchStub.restore();
 });
 
 Deno.test("createPost - network error", async () => {
-    // fetch をスタブ化し、ネットワークエラーを発生させるのだ (Errorをthrow)
     const fetchStub = stub(
         globalThis,
         "fetch",
-        () => Promise.reject(new Error("Network connection failed")), // fetch自体が失敗するケース
+        () => Promise.reject(new Error("Network connection failed")),
     );
 
-    // テスト対象の関数を呼び出す
     const postBody: CreatePostBody = {
         post: { name: "Test Post", body_md: "" },
     };
     const result = await createPost(postBody);
 
-    // 結果を検証 (err が返ることを期待)
     assertEquals(
         result.ok,
         false,
@@ -165,11 +146,9 @@ Deno.test("createPost - network error", async () => {
         );
     }
 
-    // スタブを元に戻す
     fetchStub.restore();
 });
 
-// updatePost のテストケース
 Deno.test("updatePost - success", async () => {
     const postNumber = 123;
     const updateBody: UpdatePostBody = {
@@ -306,7 +285,6 @@ Deno.test("updatePost - network error", async () => {
     fetchStub.restore();
 });
 
-// deletePost のテストケース
 Deno.test("deletePost - success", async () => {
     const postNumber = 123;
 
