@@ -17,6 +17,8 @@ import {
   ok, // ok ヘルパー
   err, // err ヘルパー
   getPostDetail, // 今回追加
+  createPost, // 今回追加
+  CreatePostBody, // 今回追加
 } from "./esa_client.ts";
 
 /* 不要なので削除
@@ -266,3 +268,87 @@ Deno.test(
 );
 
 // --- ここまで getPostDetail のテスト ---
+
+// --- ここから createPost のテスト ---
+
+Deno.test("createPost should create a new post on esa.io", async () => {
+  // Arrange
+  const timestamp = new Date().toISOString(); // ユニークなタイトルにするためタイムスタンプを使用
+  const postData: CreatePostBody = {
+    post: {
+      name: `[Test] New Post via API ${timestamp}`,
+      body_md: `# Test Post Body\n\nThis post was created by an automated test at ${timestamp}.\n\nPlease delete this post if found.`,
+      tags: ["test", "api-created"],
+      category: "TestCategory/SubCategory",
+      wip: true, // WIPとして作成
+      message: "Creating a test post via API",
+    },
+  };
+
+  // Act
+  const result = await createPost(postData);
+
+  // Assert
+  assertOk(result, "記事の作成が成功すること (result.ok === true)");
+
+  const createdPost = result.value;
+  assertExists(createdPost.number, "作成された記事の番号が存在すること");
+  assertEquals(
+    createdPost.name,
+    postData.post.name,
+    "作成された記事のタイトルが指定通りであること"
+  );
+  // 本文は API 側で若干加工される可能性があるので、完全一致ではなく部分一致などで確認するのが無難かも
+  assert(
+    createdPost.body_md?.includes("This post was created by an automated test"),
+    "作成された記事の本文に指定した内容が含まれること"
+  );
+  assertEquals(createdPost.wip, true, "WIP フラグが指定通りであること"); // wip: true を指定したので
+  assertArrayIncludes(
+    createdPost.tags,
+    ["test", "api-created"],
+    "タグが指定通りであること"
+  );
+  assertEquals(
+    createdPost.category,
+    postData.post.category,
+    "カテゴリが指定通りであること"
+  );
+
+  console.log(
+    `✅ [Test Success] Post created: #${createdPost.number} "${createdPost.name}"`
+  );
+
+  // TODO: クリーンアップ処理を追加する？ (作成した記事を削除するなど)
+  //       今は手動で削除する必要があるのだ。
+});
+
+/* // name が必須プロパティのため、型エラーになるテストケース。
+   // createPost 関数の冒頭でチェックしているので、一旦コメントアウト。
+Deno.test("createPost should return an error if post title is missing", async () => {
+    // Arrange
+    const invalidPostData: CreatePostBody = {
+        post: {
+            // name を意図的に省略
+            body_md: "Body without title",
+        }
+    };
+
+    // Act
+    const result = await createPost(invalidPostData as any); // as any で一時的に型エラー回避も可能だが...
+
+    // Assert
+    assert(!result.ok, "タイトルがない場合はエラーが返ること");
+    assert(result.error instanceof Error);
+    assert(
+        result.error.message.includes("Post title (name) is required"),
+        "エラーメッセージに\'Post title (name) is required\'が含まれること"
+    );
+
+    console.log(
+        `✅ [Test Success] Correctly handled missing post title.`
+    );
+});
+*/
+
+// --- ここまで createPost のテスト ---

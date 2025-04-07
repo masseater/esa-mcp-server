@@ -284,6 +284,76 @@ export async function getPostDetail(
   }
 }
 
+/**
+ * 記事作成APIのリクエストボディの型
+ * @see https://docs.esa.io/posts/102#POST /v1/teams/:team_name/posts
+ */
+export interface CreatePostBody {
+  post: {
+    name: string; // 記事タイトル (必須)
+    body_md?: string; // Markdown本文
+    tags?: string[]; // タグ名の配列
+    category?: string; // カテゴリ (e.g., "日報/2024/04")
+    wip?: boolean; // true だと WIP (書き途中) として作成 (デフォルト: true)
+    message?: string; // 編集時のメッセージ (任意)
+    // user?: string; // 作成者を screen_name で指定可能 (optional)
+  };
+}
+
+/**
+ * esa.io API で新しい記事を作成する関数なのだ
+ */
+export async function createPost(
+  postData: CreatePostBody
+): Promise<Result<EsaPost, Error>> {
+  // 戻り値は作成された記事情報 (EsaPost)
+  // name (タイトル) は必須なのでチェックするのだ
+  if (!postData?.post?.name) {
+    return err(new Error("Post title (name) is required to create a post."));
+  }
+
+  const url = `${esaClientConfig.baseUrl}/posts`;
+  console.log(`[API Request] POST ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: esaClientConfig.headers,
+      body: JSON.stringify(postData), // リクエストボディをJSON文字列にするのだ
+    });
+
+    // ステータスコード 201 (Created) 以外もエラー扱いにする
+    if (response.status !== 201) {
+      // 成功は 201 Created
+      const errorBody = await response
+        .text()
+        .catch(() => "(Failed to read error body)");
+      console.error(
+        `[API Error] Failed to create post: ${response.status} ${response.statusText}`,
+        `URL: ${url}`,
+        `Request Body: ${JSON.stringify(postData)}` // デバッグ用にリクエスト内容も出すのだ
+      );
+      return err(
+        new Error(
+          `API Error ${response.status}: ${response.statusText}. Body: ${errorBody}`
+        )
+      );
+    }
+
+    // ステータスコード 201 Created の場合
+    const createdPost: EsaPost = await response.json();
+    console.log(
+      `[API Success] Post created: #${createdPost.number} "${createdPost.name}"`
+    );
+    return ok(createdPost);
+  } catch (error) {
+    console.error("[Network Error] Failed to create post:", error);
+    return err(
+      error instanceof Error ? error : new Error("Unknown network error")
+    );
+  }
+}
+
 // --- ここまで追加 ---
 
 // console.log("esa.io API クライアント設定完了なのだ！"); // 動作確認用なのでコメントアウトしても良いのだ
