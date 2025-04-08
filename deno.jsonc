@@ -8,9 +8,11 @@
         "lint": "deno lint",
         "lint:fix": "deno lint --fix",
         "check": "deno check",
-        "tsr:check": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$' '.*\\.test\\.ts$'",
-        "tsr:fix": "deno run --allow-read --allow-env --allow-write npm:tsr -w 'main\\.ts$' '.*\\.test\\.ts$'",
-        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check && deno check **/*.ts && deno task test"
+        "tsr:check:main": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$'",
+        "tsr:check:test_only": "deno run --allow-read --allow-env npm:tsr '.*\\.test\\.ts$'",
+        "tsr:check:both": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$' '.*\\.test\\.ts$'",
+        "tsr:fix": "deno run --allow-read --allow-env --allow-write npm:tsr -w 'main\\.ts$'",
+        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check:main && deno check && deno task test"
     },
     "lint": {
         "include": ["**/*.ts"],
