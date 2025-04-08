@@ -2,15 +2,16 @@
     "tasks": {
         "dev": "deno run --watch --allow-read --allow-env --allow-net --allow-read main.ts",
         "start": "deno run --allow-env --allow-net --allow-read main.ts",
-        "test": "deno test --allow-env --allow-read --allow-run",
+        "test": "deno test --allow-env --allow-read --allow-run --ignore='**/*.integration.test.ts'",
+        "test:integration": "deno test --allow-net --allow-env --allow-read **/*.integration.test.ts",
         "test:mcp": "deno run --allow-run --allow-read --allow-env --allow-net npm:@modelcontextprotocol/inspector deno run --allow-env --allow-net --allow-read main.ts",
         "fmt": "deno fmt",
         "lint": "deno lint",
         "lint:fix": "deno lint --fix",
-        "check": "deno check",
+        "check": "deno check **/*.ts",
         "tsr:check": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$' '.*\\.test\\.ts$'",
         "tsr:fix": "deno run --allow-read --allow-env --allow-write npm:tsr -w 'main\\.ts$'",
-        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check && deno check && deno task test"
+        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check && deno task check && deno task test"
     },
     "lint": {
         "include": ["**/*.ts"],
