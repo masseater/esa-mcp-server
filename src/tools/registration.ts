@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { FastMCP } from "fastmcp";
 import { getUserInfo } from "../esa_client/user.ts";
-import { getPosts } from "../esa_client/posts.ts";
+import { getPostDetail, getPosts } from "../esa_client/posts.ts";
 import type { GetPostsOptions } from "../esa_client/types.ts";
 // import { err, ok } from "../esa_client/types.ts"; // 使わない
 // import type { EsaUser } from "../esa_client/types.ts"; // 使わない
@@ -53,6 +53,35 @@ export function registerEsaTools(server: FastMCP) {
                 return JSON.stringify(result.value, null, 2);
             } else {
                 log.error(`getPosts failed: ${result.error.message}`);
+                throw result.error;
+            }
+        },
+    });
+
+    // posts.get_detail ツール
+    const getPostDetailParamsSchema = z.object({
+        post_number: z.number().int().positive().describe(
+            "The number of the post to retrieve",
+        ),
+    }).strict();
+
+    server.addTool({
+        name: "posts.get_detail",
+        description: "Get details of a specific post from esa.io",
+        parameters: getPostDetailParamsSchema,
+        execute: async (args, { log }) => {
+            log.info(
+                `Executing posts.get_detail with post_number: ${args.post_number}`,
+            );
+            const result = await getPostDetail(args.post_number);
+
+            if (result.ok) {
+                log.info("getPostDetail succeeded");
+                return JSON.stringify(result.value, null, 2);
+            } else {
+                log.error(`getPostDetail failed: ${result.error.message}`);
+                // 404 Not Found の場合は、エラーメッセージだけ返す方が親切かもしれないのだ？
+                // でも 일단은 throw しておくのだ
                 throw result.error;
             }
         },
