@@ -1,7 +1,10 @@
 # ESA MCP Server
 
+[![JSR](https://jsr.io/badges/@masseater/esa-mcp-server)](https://jsr.io/@masseater/esa-mcp-server)
+[![jsr:@masseater/esa-mcp-server](https://jsr.io/badges/@masseater/esa-mcp-server/runtime)](https://jsr.io/@masseater/esa-mcp-server?runtime=deno)
+
 esa.io API と連携するための Model Context Protocol (MCP) サーバーです。
-Deno を使用して構築されています。
+Deno と JSR を使用して公開されています。
 
 ## 機能
 
@@ -14,9 +17,9 @@ Deno を使用して構築されています。
 *   記事の更新
 *   記事の削除
 
-## URL から直接実行 (Running Directly from URL)
+## 使い方 (JSR からの実行)
 
-このサーバーは、リポジトリをローカルにクローンすることなく、URL から直接実行することも可能です。
+[JSR (JavaScript Registry)](https://jsr.io/) に公開されているため、ローカルにリポジトリをクローンすることなく、直接 MCP サーバーを実行できます。
 
 ### 前提条件 (Prerequisites)
 
@@ -26,7 +29,7 @@ Deno を使用して構築されています。
 ### セットアップ (Setup)
 
 1.  **環境変数の設定 (Set up environment variables):**
-    サーバーを実行したいディレクトリに `.env` ファイルを作成し、以下の内容を記述します。(Create a `.env` file in the directory where you want to run the server and add the following content:)
+    サーバーを実行したいディレクトリ（通常はプロジェクトのワークスペースルート）に `.env` ファイルを作成し、以下の内容を記述します。(Create a `.env` file in the directory where you want to run the server (usually the project workspace root) and add the following content:)
 
     ```dotenv
     # .env
@@ -40,37 +43,45 @@ Deno を使用して構築されています。
 以下のコマンドを実行します。(Run the following command:)
 
 ```bash
-deno run --allow-env --allow-net --allow-read=.env --import-map=https://raw.githubusercontent.com/masseater/esa-mcp-server/main/deno.jsonc https://raw.githubusercontent.com/masseater/esa-mcp-server/main/main.ts
+deno run --allow-env --allow-net --allow-read jsr:@masseater/esa-mcp-server@^0.1.0
 ```
 
 *   `--allow-env`: 環境変数 (`.env` から読み込んだもの) へのアクセスを許可します。
 *   `--allow-net`: esa.io API との通信を許可します。
-*   `--allow-read=.env`: カレントディレクトリの `.env` ファイルの読み取りを許可します。
-*   `--import-map=<URL>`: モジュールの解決に使用するインポートマップ (この場合は `deno.jsonc` の URL) を指定します。
+*   `--allow-read`: `.env` ファイルや Deno の内部キャッシュなど、必要なファイルへの読み込みアクセスを許可します。（初回実行時などに Deno のキャッシュディレクトリ等へのアクセス許可を求めるプロンプトが表示される場合があります。）
+*   `jsr:@masseater/esa-mcp-server@^0.1.0`: 実行する JSR パッケージを指定します。
 
-これで、ローカルにコードがなくても MCP サーバーが起動します。
+正常に起動すると、以下のような JSON-RPC の `ping` メッセージが標準出力に繰り返し表示されます。これはサーバーがクライアントからの接続を待機している状態を示します。終了するには `Ctrl+C` を押してください。
 
-**(注意) MCP サーバーとしての利用:**
-一般的に、MCPサーバーとして安定して利用する場合は、ローカルにクローンして絶対パスを指定する方法が推奨されます（起動速度やデバッグのしやすさのため）。
+```json
+{\"method\":\"ping\",\"jsonrpc\":\"2.0\",\"id\":0}
+{\"method\":\"ping\",\"jsonrpc\":\"2.0\",\"id\":1}
+{\"method\":\"ping\",\"jsonrpc\":\"2.0\",\"id\":2}
+...
+```
 
-ただし、URLから直接MCPサーバーとして実行したい場合は、`.cursor/mcp.json` で以下のように設定できます。この場合でも、機密情報（APIトークンなど）は別途実行ディレクトリに `.env` ファイルを配置して管理することを強く推奨します。
+
+### MCPサーバーとしての設定 (Usage as MCP Server in Cursor)
+
+Cursor で MCP サーバーとして利用する場合、`.cursor/mcp.json` に以下のように設定します。
+
+**🚨 警告: 以下の設定例のように API トークン等を直接書き込む方法は、セキュリティリスクを伴います。`.cursor` ディレクトリが `.gitignore` で無視されていない場合、このファイルをコミットすると機密情報が漏洩します。可能な限り `.env` ファイルを使用し、`${env:VAR_NAME}` 形式で読み込むことを強く推奨します。もし直接書き込む場合は、`.cursor/mcp.json` ファイルを絶対にコミットしないでください！ 🚨**
 
 ```json
 {
   "mcpServers": {
-    "esa-mcp-server-url": {
+    "esa-mcp-server-jsr": {
       "command": "deno",
       "args": [
         "run",
         "--allow-env",
         "--allow-net",
-        "--allow-read=.env",
-        "--import-map=https://raw.githubusercontent.com/masseater/esa-mcp-server/main/deno.jsonc",
-        "https://raw.githubusercontent.com/masseater/esa-mcp-server/main/main.ts"
+        "--allow-read",
+        "jsr:@masseater/esa-mcp-server@^0.1.0"
       ],
       "env": {
-        "ESA_TOKEN": "YOUR_ESA_API_TOKEN",
-        "ESA_TEAM_NAME": "YOUR_ESA_TEAM_NAME"
+        "ESA_TOKEN": "YOUR_ACTUAL_ESA_API_TOKEN",
+        "ESA_TEAM_NAME": "YOUR_ACTUAL_ESA_TEAM_NAME"
       }
     }
   }
@@ -78,18 +89,20 @@ deno run --allow-env --allow-net --allow-read=.env --import-map=https://raw.gith
 ```
 *   **ポイント:**
     *   `command`: `deno` を指定します。
-    *   `args`: `run` と必要なパーミッション (`--allow-env`, `--allow-net`, `--allow-read=.env`)、`--import-map` フラグ（`deno.jsonc` の URL を指定）、そして `main.ts` の URL を指定します。
-    *   `env`: 環境変数を設定します。
+    *   `args`: `run` と必要なパーミッション (`--allow-env`, `--allow-net`, `--allow-read`)、そして JSR パッケージの specifier を指定します。
+    *   `env`: 環境変数を **直接** 設定します。**この方法を使用する場合、`.cursor/mcp.json` のコミットは絶対に避けてください。**
 
 ---
 
-## ローカルでの開発と実行 (Local Development and Execution)
+## 開発 (ローカル) (Local Development)
 
-### 前提条件
+この MCP サーバーの開発に参加したり、ローカルでコードを修正・実行したりする場合は、以下の手順に従ってください。
 
-*   [Deno](https://deno.land/) がインストールされていること。 **v2.0 以降が必要です。** (Install [Deno](https://deno.land/). **Deno v2.0 or later is required.**)
+### 前提条件 (Prerequisites)
+
+*   [Deno](https://deno.land/) v2.0 以降がインストールされていること。(Deno v2.0 or later installed.)
+*   [Git](https://git-scm.com/) がインストールされていること。(Git installed.)
 *   esa.io の API トークンを持っていること。
-*   (オプション) [Git](https://git-scm.com/) がインストールされていること (リポジトリをクローンする場合)。
 
 ### セットアップ (Setup)
 
@@ -98,104 +111,62 @@ deno run --allow-env --allow-net --allow-read=.env --import-map=https://raw.gith
     git clone https://github.com/masseater/esa-mcp-server.git
     cd esa-mcp-server
     ```
-2.  **Deno のインストール (Install Deno):**
-    [Deno](https://deno.land/) をインストールします。**v2.0 以降が必要です。**
-    Install [Deno](https://deno.land/). **Deno v2.0 or later is required.**
-3.  **環境変数の設定 (Set up environment variables):**
-    `.env.example` をコピーして `.env` ファイルを作成し、あなたのesa.io APIトークンとチーム名を記述します。
-    Copy `.env.example` to create a `.env` file and fill in your esa.io API token and team name.
+2.  **環境変数の設定 (Set up environment variables):**
+    `.env.example` をコピーして `.env` ファイルを作成し、あなたの esa.io API トークンとチーム名を記述します。
     ```bash
     cp .env.example .env
     # Edit .env with your actual token and team name
     ```
-    セキュリティのため、`.env` ファイルは `.gitignore` に追加されており、リポジトリには含まれません。
-    For security reasons, the `.env` file is included in `.gitignore` and will not be part of the repository.
-4.  **(推奨) Git フックの有効化 (Enable Git Hooks (Recommended)):**
+3.  **(推奨) Git フックの有効化 (Enable Git Hooks (Recommended)):**
     コミット前にコードのチェックを自動的に行うために、以下のコマンドを実行して Git フックをセットアップします。
-    To automatically check your code before committing, run the following command to set up Git hooks using `deno_hooks`:
     ```bash
     deno run -A https://deno.land/x/deno_hooks/mod.ts install
     ```
-    これにより、`deno.jsonc` で定義された `pre-commit` タスク (`deno task check:all`) がコミット時に実行されます。
-    This ensures the `pre-commit` task defined in `deno.jsonc` (`deno task check:all`) runs upon commit.
 
-## MCPサーバーとしての使い方 (Usage as MCP Server)
-
-Cursor でこのリポジトリを MCP サーバーとして使用する場合の設定方法です。
-
-1.  **(オプション) MCPサーバー設定 (Configure MCP Server (Optional)):**
-     `.cursor/mcp.json` に以下の設定を追加します。
-    (Optional: Add the following configuration to `.cursor/mcp.json`)
-    ```json
-    {
-      "mcpServers": {
-        "esa-mcp-server": {
-          "command": "deno",
-          "args": [
-            "run",
-            "--allow-env",
-            "--allow-net",
-            "--allow-read",
-            "ABSOLUTE_PATH_TO/esa-mcp-server/main.ts" // Replace with the actual absolute path
-          ],
-          "env": {
-            "ESA_TOKEN": "${env:ESA_TOKEN}", // Reads from .env
-            "ESA_TEAM_NAME": "${env:ESA_TEAM_NAME}" // Reads from .env
-          }
-        }
-      }
-    }
-    ```
-    **注意:**
-    *   `ABSOLUTE_PATH_TO/esa-mcp-server/main.ts` は、あなたの環境における `main.ts` への **絶対パス** に書き換えてください。(Replace `ABSOLUTE_PATH_TO/esa-mcp-server/main.ts` with the **absolute path** to `main.ts` in your environment.)
-    *   `.cursor/mcp.json` で `env` を `${env:VAR_NAME}` の形式で指定すると、`.env` ファイルから値を読み込むことができます。(Using `${env:VAR_NAME}` in `.cursor/mcp.json` allows reading values from the `.env` file.)
-    *   **セキュリティ上の注意**: `.cursor/mcp.json` に直接 API トークンを書き込まないでください。`.env` ファイルを使用することを強く推奨します。(**Security Note**: Do not hardcode your API token directly in `.cursor/mcp.json`. Using the `.env` file is strongly recommended.)
-
-## 実行 (Running)
-
-Cursor で MCP サーバーとして設定した場合、Cursor が自動的にサーバーを起動します。
-
-手動で実行する場合 (デバッグなど): (Manual execution for debugging etc.)
+### ローカルでの実行 (Running Locally)
 
 ```bash
 deno run --allow-env --allow-net --allow-read main.ts
 ```
+または、ホットリロードを有効にして実行する場合:
+```bash
+deno task dev
+```
 
-### 利用可能なツール (Available Tools)
+### チェックとテスト (Checks and Tests)
 
-現在、以下のツールが利用可能です。(Currently, the following tools are available:)
-
-*   `esa_mcp_server.user.get_info`: 現在の esa.io ユーザー情報を取得します。(Get current esa.io user information.)
-*   `esa_mcp_server.posts.get_list`: 投稿一覧を取得します。(Get a list of posts.)
-*   `esa_mcp_server.posts.get_detail`: 特定の投稿の詳細を取得します。(Get details of a specific post.)
-*   `esa_mcp_server.posts.create`: 新しい投稿を作成します。(Create a new post.)
-*   `esa_mcp_server.posts.update`: 既存の投稿を更新します。(Update an existing post.)
-*   `esa_mcp_server.posts.delete`: 投稿を削除します。(Delete a post.)
-
-## 開発
-
-### チェックとテスト
-
-以下のコマンドで、フォーマット、リント、型チェック、ユニットテストをまとめて実行できます。コミット前にはこのコマンドが自動的に実行されます（pre-commit フック）。
-
+以下のコマンドで、フォーマット、リント、型チェック、ユニットテストをまとめて実行できます。`pre-commit` フックにより、コミット前にも自動実行されます。
 ```bash
 deno task check:all
 ```
 
-### インテグレーションテスト
-
-インテグレーションテスト（実際の esa.io API と通信するテスト）は別途実行します。
-
+インテグレーションテスト（実際の esa.io API と通信するテスト）は別途実行します。`.env` ファイルが正しく設定されている必要があります。
 ```bash
 deno task test:integration
 ```
 
-**注意:** インテグレーションテストを実行するには、有効な `ESA_TEAM_NAME` と `ESA_TOKEN` が `.env` ファイルに設定されている必要があります。
+### JSR への公開 (Publishing to JSR)
 
----
+新しいバージョンを JSR に公開する手順です。
 
-*この README は基本的な情報のみ記載しています。詳細はコードやコミットログを参照してください。* 
+1.  `deno.jsonc` の `version` フィールドを更新します。
+2.  変更内容をコミットします。
+3.  公開前のチェックを実行します。
+    ```bash
+    deno publish --dry-run
+    ```
+4.  問題がなければ公開します。
+    ```bash
+    deno publish
+    ```
 
-## NOTE
+## ライセンス (License)
+
+このプロジェクトは [MIT License](./LICENSE) の下で公開されています。
+(注: `LICENSE` ファイルがまだリポジトリにない場合は、別途追加する必要があります。)
+
+## その他 (Misc)
+
+### 生成元 (Generated by)
 
 generated by Cursor (gemini-2.5-pro-exp-03-25)
