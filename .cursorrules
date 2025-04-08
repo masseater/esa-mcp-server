@@ -78,3 +78,41 @@ Address linter and formatter errors immediately when they arise. Do not proceed 
 # Periodically Check Formatting and Linting
 
 Remember to periodically run `deno task check` (or equivalent command like `deno fmt && deno lint`) to ensure code quality and consistency.
+
+# Added Tasks (by Gemini)
+
+## `check:all`
+
+- **Command:** `deno task check:all`
+- **Purpose:** Runs formatting (`deno fmt`), lint fixing (`deno lint --fix`), and type checking (`deno check`) sequentially.
+- **Usage:** Use this task regularly to ensure overall code quality before committing or pushing changes.
+
+# Linting Rules (Added by Gemini)
+
+## `no-unused-vars`
+
+- **Action:** Delete unused imports or variables completely.
+- **DO NOT:** Use underscore prefixes (e.g., `_variable`) or comment out the unused code.
+
+## General Unused Code
+
+- **Action:** Remove any code that is not currently used or planned for immediate use.
+- **Reasoning:** Keep the codebase clean and focused.
+
+## 定数定義
+
+定数を定義する際は `as const` を使用して、より厳密な型推論を有効にするのだ。
+
+```typescript
+// Good
+export const MY_OPTIONS = {
+  optionA: 'valueA',
+  optionB: 123,
+} as const;
+
+// Bad
+export const MY_OPTIONS = {
+  optionA: 'valueA',
+  optionB: 123,
+};
+```

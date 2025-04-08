@@ -1,16 +1,17 @@
 import type { z, ZodSchema } from "zod";
 import type { Result } from "../esa_client/types.ts";
-import { esaClientConfig } from "../esa_client/config.ts";
 import type { Context } from "fastmcp";
 import type { ApiFunction } from "./types.ts";
+import type { UpdatePostBody } from "../esa_client/types.ts";
 
-type GetClientParamsFn<Schema extends ZodSchema<any>, ClientParams> = (
+type GetClientParamsFn<Schema extends ZodSchema<unknown>, ClientParams> = (
     validatedArgs: z.infer<Schema>,
 ) => ClientParams | undefined;
 
-type FormatSuccessOutputFn<Schema extends z.ZodSchema<any>, ClientResult> = (
-    resultValue: ClientResult,
-) => string;
+type FormatSuccessOutputFn<Schema extends z.ZodSchema<unknown>, ClientResult> =
+    (
+        resultValue: ClientResult,
+    ) => string;
 
 interface CreateExecutorOptions<
     Schema extends z.ZodTypeAny,
@@ -77,7 +78,7 @@ export function createEsaToolExecutor<
             if (toolName === "mcp_esa_server_update_post") {
                 const updateParams = clientParams as {
                     postNumber: number;
-                    body: any;
+                    body: UpdatePostBody;
                 };
                 if (!updateParams) {
                     throw new Error(
@@ -86,7 +87,7 @@ export function createEsaToolExecutor<
                 }
                 const specificApiFn = apiFn as unknown as (
                     postNumber: number,
-                    body: any,
+                    body: UpdatePostBody,
                 ) => Promise<Result<ClientResult, Error>>;
                 result = await specificApiFn(
                     updateParams.postNumber,

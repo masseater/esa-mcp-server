@@ -18,19 +18,22 @@ export type ApiFunction<TParams, TResult> = (
  * Defines the contract for transforming data and formatting results,
  * and holds the reference to the actual API function to call.
  */
-export type EsaToolLogic<TSchema extends z.ZodTypeAny, TResult, TParams = any> =
-    {
-        /** The actual API function (e.g., createPost, getPosts) to execute */
-        apiFn: ApiFunction<TParams, TResult>;
+export type EsaToolLogic<
+    TSchema extends z.ZodTypeAny,
+    TResult,
+    TParams = unknown,
+> = {
+    /** The actual API function (e.g., createPost, getPosts) to execute */
+    apiFn: ApiFunction<TParams, TResult>;
 
-        /** Function to transform validated schema data to API function parameters */
-        getClientParams: (
-            validatedData: z.infer<TSchema>,
-        ) => TParams | undefined;
+    /** Function to transform validated schema data to API function parameters */
+    getClientParams: (
+        validatedData: z.infer<TSchema>,
+    ) => TParams | undefined;
 
-        /** Optional function to format the success result string */
-        formatSuccessOutput?: (result: TResult) => string;
-    };
+    /** Optional function to format the success result string */
+    formatSuccessOutput?: (result: TResult) => string;
+};
 
 /**
  * Base type for Zod schemas used for tool parameter validation.
@@ -48,8 +51,12 @@ export interface EsaToolConfig {
 /**
  * Type definition for a complete tool implementation module.
  */
-export interface EsaToolImplementation {
-    schema: EsaToolSchema;
-    logic: EsaToolLogic<any, any, any>; // Use 'any' here for the generic map
+export interface EsaToolImplementation<
+    TSchema extends EsaToolSchema = EsaToolSchema,
+    TResult = unknown,
+    TParams = unknown,
+> {
+    schema: TSchema;
+    logic: EsaToolLogic<TSchema, TResult, TParams>;
     config: EsaToolConfig;
 }

@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
-import { assertSpyCalls, restore, spy, Stub, stub } from "@std/testing/mock";
+import { assertSpyCalls, restore, spy, stub } from "@std/testing/mock";
 import { z } from "zod";
 import { err, ok, Result } from "../esa_client/types.ts";
 import { createEsaToolExecutor } from "./common_executor.ts";
 import type { Context } from "fastmcp";
 import { esaClientConfig } from "../esa_client/config.ts";
+import type { ApiFunction } from "./types.ts";
 
 type EsaToolContext = Context<undefined>;
 
@@ -21,7 +22,7 @@ const createMockContext = (
 ): EsaToolContext => ({
     session: undefined,
     reportProgress: spy(),
-    log: mockLogger as any,
+    log: mockLogger,
 });
 
 const testSchema = z.object({
@@ -30,7 +31,7 @@ const testSchema = z.object({
 });
 type TestSchemaInput = z.infer<typeof testSchema>;
 
-const mockFetch = async (
+const mockFetch = (
     input: string | URL | Request,
     init?: RequestInit,
 ): Promise<Response> => {
@@ -43,32 +44,38 @@ const mockFetch = async (
         (input instanceof Request ? input.method.toUpperCase() : "GET");
 
     if (url.endsWith("/test/success") && method === "POST") {
-        return new Response(JSON.stringify({ data: "Mocked fetch success!" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-        });
+        return Promise.resolve(
+            new Response(JSON.stringify({ data: "Mocked fetch success!" }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            }),
+        );
     }
 
     if (url.endsWith("/test/formatter") && method === "POST") {
-        return new Response(JSON.stringify({ data: "Formatted Data" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-        });
+        return Promise.resolve(
+            new Response(JSON.stringify({ data: "Formatted Data" }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            }),
+        );
     }
 
     if (url.endsWith("/test/api_error") && method === "POST") {
-        return new Response(JSON.stringify({ message: "Mock API Failed" }), {
-            status: 500,
-            statusText: "Internal Server Error",
-            headers: { "Content-Type": "application/json" },
-        });
+        return Promise.resolve(
+            new Response(JSON.stringify({ message: "Mock API Failed" }), {
+                status: 500,
+                statusText: "Internal Server Error",
+                headers: { "Content-Type": "application/json" },
+            }),
+        );
     }
 
     if (url.endsWith("/test/network_error")) {
-        throw new Error("Simulated network failure");
+        return Promise.reject(new Error("Simulated network failure"));
     }
 
-    return new Response("Not Found", { status: 404 });
+    return Promise.resolve(new Response("Not Found", { status: 404 }));
 };
 
 describe("createEsaToolExecutor", () => {
@@ -272,7 +279,7 @@ describe("createEsaToolExecutor", () => {
 
         const executor = createEsaToolExecutor({
             toolName: "testToolParamError",
-            apiFn: mockApiFn as any,
+            apiFn: mockApiFn as unknown as ApiFunction<unknown, unknown>,
             getClientParams: getClientParamsFn,
         });
 

@@ -2,7 +2,7 @@ import { describe, it } from "@std/testing/bdd";
 import { assertEquals } from "@std/assert";
 
 // Import the specific implementation details
-import { logic, schema } from "./get_info.ts";
+import { logic } from "./get_info.ts";
 
 describe("getUserInfoLogic", () => {
     describe("getClientParams", () => {

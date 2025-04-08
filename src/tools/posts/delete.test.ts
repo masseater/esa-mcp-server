@@ -1,11 +1,5 @@
 import { describe, it } from "@std/testing/bdd";
 import { assertEquals, assertStrictEquals } from "@std/assert";
-import {
-    returnsNext,
-    stub,
-} from "https://deno.land/std@0.224.0/testing/mock.ts";
-import { err, ok } from "../../esa_client/types.ts";
-import * as postsApi from "../../esa_client/posts.ts";
 import { logic } from "./delete.ts";
 
 describe("deletePostLogic", () => {

@@ -1,12 +1,18 @@
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd";
 import { assert, assertEquals, assertExists } from "@std/assert";
 import { assertSpyCalls, restore, Spy, spy } from "@std/testing/mock";
-import type { FastMCP } from "fastmcp";
+import type { FastMCP } from "fastmcp/mod.ts";
 
 import { implementations } from "./implementations.ts";
-import type { EsaToolImplementation } from "./types.ts";
-
 import { registerEsaTools } from "./registration.ts";
+
+// Copied from common_executor.test.ts
+const createMockLogger = () => ({
+    debug: spy(),
+    error: spy(),
+    info: spy(),
+    warn: spy(),
+});
 
 describe("registerEsaTools", () => {
     let mockServer: FastMCP;
@@ -16,7 +22,7 @@ describe("registerEsaTools", () => {
         addToolSpy = spy();
         mockServer = {
             addTool: addToolSpy,
-            log: console as any,
+            log: createMockLogger(),
         } as unknown as FastMCP;
     });
 
@@ -30,30 +36,41 @@ describe("registerEsaTools", () => {
         const expectedToolCount = Object.keys(implementations).length;
         assertSpyCalls(addToolSpy, expectedToolCount);
 
-        for (const implKey in implementations) {
-            const expectedImpl =
-                implementations[implKey] as EsaToolImplementation;
-            const expectedConfig = expectedImpl.config;
-            const expectedSchema = expectedImpl.schema;
+        (Object.keys(implementations) as Array<keyof typeof implementations>)
+            .forEach(
+                (implKey) => {
+                    const expectedImpl = implementations[implKey];
+                    const expectedConfig = expectedImpl.config;
+                    const expectedSchema = expectedImpl.schema;
 
-            assertExists(expectedConfig, `Config missing for ${implKey}`);
-            assertExists(expectedSchema, `Schema missing for ${implKey}`);
+                    assertExists(
+                        expectedConfig,
+                        `Config missing for ${implKey}`,
+                    );
+                    assertExists(
+                        expectedSchema,
+                        `Schema missing for ${implKey}`,
+                    );
 
-            const addToolCall = addToolSpy.calls.find(
-                (call) => call.args[0]?.name === expectedConfig.name,
+                    const addToolCall = addToolSpy.calls.find(
+                        (call) => call.args[0]?.name === expectedConfig.name,
+                    );
+                    assertExists(
+                        addToolCall,
+                        `addTool call for ${expectedConfig.name} not found`,
+                    );
+                    const addToolArgs = addToolCall.args[0];
+                    assertEquals(addToolArgs.name, expectedConfig.name);
+                    assertEquals(
+                        addToolArgs.description,
+                        expectedConfig.description,
+                    );
+                    assertEquals(addToolArgs.parameters, expectedSchema);
+                    assert(
+                        typeof addToolArgs.execute === "function",
+                        `Execute is not a function for ${expectedConfig.name}`,
+                    );
+                },
             );
-            assertExists(
-                addToolCall,
-                `addTool call for ${expectedConfig.name} not found`,
-            );
-            const addToolArgs = addToolCall.args[0];
-            assertEquals(addToolArgs.name, expectedConfig.name);
-            assertEquals(addToolArgs.description, expectedConfig.description);
-            assertEquals(addToolArgs.parameters, expectedSchema);
-            assert(
-                typeof addToolArgs.execute === "function",
-                `Execute is not a function for ${expectedConfig.name}`,
-            );
-        }
     });
 });

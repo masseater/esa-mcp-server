@@ -1,25 +1,39 @@
 import { FastMCP } from "fastmcp";
-import { load } from "dotenv";
-import { registerEsaTools } from "./src/tools/registration.ts";
+import { z } from "zod"; // Or any validation library that supports Standard Schema
 
-async function main() {
-    await load({ export: true, allowEmptyValues: true });
+const server = new FastMCP({
+    name: "esa-mcp-server",
+    version: "1.0.0",
+});
 
-    const server = new FastMCP({
-        name: "esa-mcp-server",
-        version: "0.1.0",
-    });
+/*
+server.addTool({
+    name: "add",
+    description: "Add two numbers",
+    parameters: z.object({
+        a: z.number(),
+        b: z.number(),
+    }),
+    execute: async (args) => {
+        return String(args.a + args.b);
+    },
+});
+*/
 
-    registerEsaTools(server);
+server.addTool({
+    name: "echo",
+    description: "Echoes the input string",
+    parameters: z.object({
+        message: z.string(),
+    }),
+    execute: (args) => {
+        // MCP サーバーの execute 関数内では console.log は使わず、
+        // 第2引数から log を受け取って使うのだ (カスタム指示参照)
+        // 今回はログ出力は不要なのだ
+        return Promise.resolve(args.message);
+    },
+});
 
-    await server.start({
-        transportType: "stdio",
-    });
-}
-
-if (import.meta.main) {
-    await load({ export: true, allowEmptyValues: true });
-    main().catch(() => {
-        // エラーは FastMCP が処理するので、ここでは何もしないのだ
-    });
-}
+await server.start({
+    transportType: "stdio",
+});

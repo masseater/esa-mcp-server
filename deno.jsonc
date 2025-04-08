@@ -2,7 +2,13 @@
     "tasks": {
         "dev": "deno run --watch --allow-read --allow-env --allow-net --allow-read main.ts",
         "start": "deno run --allow-env --allow-net --allow-read main.ts",
-        "test": "deno test --allow-env --allow-read"
+        "test": "deno test --allow-env --allow-read --allow-run",
+        "test:mcp": "deno run --allow-run --allow-read --allow-env --allow-net npm:@modelcontextprotocol/inspector \"deno run --watch --allow-env --allow-net --allow-read main.ts\"",
+        "fmt": "deno fmt",
+        "lint": "deno lint",
+        "lint:fix": "deno lint --fix",
+        "check": "deno check",
+        "check:all": "deno task fmt && deno task lint:fix && deno check **/*.ts && deno task test"
     },
     "lint": {
         "include": ["**/*.ts"],
@@ -29,10 +35,13 @@
         "@std/testing": "jsr:@std/testing@^1.0.10",
         "@std/testing/mock": "jsr:@std/testing@^1.0.10/mock",
         "@std/testing/bdd": "jsr:@std/testing@^1.0.10/bdd",
+        "@std/async/delay": "jsr:@std/async@^1.0.0/delay",
+        "@std/io/buffer": "jsr:@std/io@^0.224.3/buffer",
         "fastmcp": "npm:fastmcp@^1.21.0",
         "std/": "https://deno.land/std@0.224.0/",
         "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
         "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.8.0",
         "zod": "npm:zod@^3.24.2"
-    }
+    },
+    "nodeModulesDir": "auto"
 }
