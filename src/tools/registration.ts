@@ -3,6 +3,7 @@ import type { FastMCP } from "fastmcp";
 import { getUserInfo } from "../esa_client/user.ts";
 import {
     createPost,
+    deletePost,
     getPostDetail,
     getPosts,
     updatePost,
@@ -190,6 +191,34 @@ export function registerEsaTools(server: FastMCP) {
             } else {
                 log.error(`updatePost failed: ${result.error.message}`);
                 throw result.error;
+            }
+        },
+    });
+
+    // posts.delete ツール
+    const deletePostParamsSchema = z.object({
+        post_number: z.number().int().positive().describe(
+            "The number of the post to delete",
+        ),
+    }).strict();
+
+    server.addTool({
+        name: "posts.delete",
+        description: "Delete a post on esa.io",
+        parameters: deletePostParamsSchema,
+        execute: async (args, { log }) => {
+            log.info(
+                `Executing posts.delete with post_number: ${args.post_number}`,
+            );
+            const result = await deletePost(args.post_number);
+
+            if (result.ok) {
+                // 削除成功時は esa.io API は body が空 (null) を返す
+                log.info("deletePost succeeded");
+                return JSON.stringify({ success: true }); // 成功したことを示すレスポンスを返す
+            } else {
+                log.error(`deletePost failed: ${result.error.message}`);
+                throw result.error; // エラーをそのままスロー
             }
         },
     });
