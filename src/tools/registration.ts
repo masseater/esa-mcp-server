@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { FastMCP } from "fastmcp";
 import { getUserInfo } from "../esa_client/user.ts";
-import { getPostDetail, getPosts } from "../esa_client/posts.ts";
-import type { GetPostsOptions } from "../esa_client/types.ts";
+import { createPost, getPostDetail, getPosts } from "../esa_client/posts.ts";
+import type { CreatePostBody, GetPostsOptions } from "../esa_client/types.ts";
 // import { err, ok } from "../esa_client/types.ts"; // 使わない
 // import type { EsaUser } from "../esa_client/types.ts"; // 使わない
 
@@ -82,6 +82,54 @@ export function registerEsaTools(server: FastMCP) {
                 log.error(`getPostDetail failed: ${result.error.message}`);
                 // 404 Not Found の場合は、エラーメッセージだけ返す方が親切かもしれないのだ？
                 // でも 일단은 throw しておくのだ
+                throw result.error;
+            }
+        },
+    });
+
+    // posts.create ツール
+    const createPostParamsSchema = z.object({
+        name: z.string().min(1).describe("Post title"),
+        body_md: z.string().describe("Post body in Markdown format"),
+        tags: z.array(z.string()).optional().describe(
+            "List of tags for the post",
+        ),
+        category: z.string().optional().describe(
+            "Category path (e.g., 'foo/bar')",
+        ),
+        wip: z.boolean().optional().default(true).describe(
+            "Whether the post is Work In Progress (default: true)",
+        ),
+        message: z.string().optional().describe("Commit message for the post"),
+    }).strict();
+
+    server.addTool({
+        name: "posts.create",
+        description: "Create a new post on esa.io",
+        parameters: createPostParamsSchema,
+        execute: async (args, { log }) => {
+            log.info(
+                `Executing posts.create with args: ${JSON.stringify(args)}`,
+            );
+            // Zod スキーマで検証済みの args を CreatePostBody として渡す
+            // name と body_md は必須、他はオプション
+            const postData: CreatePostBody = {
+                post: {
+                    name: args.name,
+                    body_md: args.body_md,
+                    tags: args.tags,
+                    category: args.category,
+                    wip: args.wip,
+                    message: args.message,
+                },
+            };
+            const result = await createPost(postData);
+
+            if (result.ok) {
+                log.info("createPost succeeded");
+                return JSON.stringify(result.value, null, 2);
+            } else {
+                log.error(`createPost failed: ${result.error.message}`);
                 throw result.error;
             }
         },
