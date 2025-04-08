@@ -38,18 +38,35 @@ Deno と JSR を使用して公開されています。
     ```
     `YOUR_ESA_TEAM_NAME` と `YOUR_ESA_API_TOKEN` を実際の値に置き換えてください。(Replace `YOUR_ESA_TEAM_NAME` and `YOUR_ESA_API_TOKEN` with your actual values.)
 
+    **esa.io API トークンの発行方法:**
+    *   あなたの esa.io チームのページにアクセスします (例: `https://<your-team-name>.esa.io/`)。
+    *   右上の自分のアイコンをクリックし、「設定 (Settings)」>「アプリケーション」を選択します。
+    *   「個人用アクセストークン (Personal access tokens)」セクションで、「新しいトークンを発行する (Generate new token)」をクリックします。
+    *   トークン名 (例: `mcp-server`) を入力し、必要な権限スコープを選択します。この MCP サーバーには少なくとも以下の権限が必要です:
+        *   `read` (記事の読み取り)
+        *   `write` (記事の作成・更新・削除)
+        *   `read_user` (ユーザー情報の取得)
+    *   「発行する (Generate token)」をクリックします。
+    *   **表示されたトークンを必ずコピーして安全な場所に保管してください。このトークンは一度しか表示されません。**
+    *   コピーしたトークンを、上記 `.env` ファイルの `ESA_TOKEN` の値として貼り付けます。
+
 ### 実行 (Running)
 
 以下のコマンドを実行します。(Run the following command:)
 
 ```bash
-deno run --allow-env --allow-net --allow-read jsr:@masseater/esa-mcp-server@^0.1.0
+# 最新版を使う場合 (推奨)
+deno run --allow-env --allow-net=api.esa.io --allow-read jsr:@masseater/esa-mcp-server
+
+# 特定バージョン (例: 0.1.0) を使う場合
+# deno run --allow-env --allow-net=api.esa.io --allow-read jsr:@masseater/esa-mcp-server@0.1.0
 ```
 
-*   `--allow-env`: 環境変数 (`.env` から読み込んだもの) へのアクセスを許可します。
-*   `--allow-net`: esa.io API との通信を許可します。
-*   `--allow-read`: `.env` ファイルや Deno の内部キャッシュなど、必要なファイルへの読み込みアクセスを許可します。（初回実行時などに Deno のキャッシュディレクトリ等へのアクセス許可を求めるプロンプトが表示される場合があります。）
-*   `jsr:@masseater/esa-mcp-server@^0.1.0`: 実行する JSR パッケージを指定します。
+*   `--allow-env`: 環境変数へのアクセスを許可します。(依存ライブラリ (`npm:debug`) が内部的に環境変数全体を読み込もうとするため、特定の変数 (`ESA_TOKEN`, `ESA_TEAM_NAME`) のみを許可する `--allow-env=...` ではエラーが発生します。)
+*   `--allow-net=api.esa.io`: 必要な esa.io API (`api.esa.io`) へのネットワークアクセスのみを許可します。
+*   `--allow-read`: Deno が内部で利用する npm パッケージ等のキャッシュや、(もし使用する場合の) `.env` ファイルへの読み込みアクセスを許可します。
+    *   **注記:** 本来はアクセス許可を最小限に絞るべきですが、Deno のキャッシュディレクトリの場所は環境によって異なるため、特定パスへの限定が困難です。そのため、ここでは利便性を考慮して `--allow-read` を使用しています。これにより、ファイルシステムへの広範な読み取りアクセスが許可される点にご注意ください。初回実行時などに Deno のキャッシュディレクトリ等へのアクセス許可を求めるプロンプトが表示される場合があります。
+*   `jsr:@masseater/esa-mcp-server`: 実行する JSR パッケージを指定します。バージョンを省略すると**常に最新バージョン**が使用されます（推奨）。特定のバージョンを使用したい場合は `@<バージョン>` (例: `@0.1.0`) やバージョン範囲 (`@^0.1.0` など) を追記できます。
 
 正常に起動すると、以下のような JSON-RPC の `ping` メッセージが標準出力に繰り返し表示されます。これはサーバーがクライアントからの接続を待機している状態を示します。終了するには `Ctrl+C` を押してください。
 
@@ -75,9 +92,9 @@ Cursor で MCP サーバーとして利用する場合、`.cursor/mcp.json` に�
       "args": [
         "run",
         "--allow-env",
-        "--allow-net",
+        "--allow-net=api.esa.io",
         "--allow-read",
-        "jsr:@masseater/esa-mcp-server@^0.1.0"
+        "jsr:@masseater/esa-mcp-server"
       ],
       "env": {
         "ESA_TOKEN": "YOUR_ACTUAL_ESA_API_TOKEN",
@@ -89,7 +106,7 @@ Cursor で MCP サーバーとして利用する場合、`.cursor/mcp.json` に�
 ```
 *   **ポイント:**
     *   `command`: `deno` を指定します。
-    *   `args`: `run` と必要なパーミッション (`--allow-env`, `--allow-net`, `--allow-read`)、そして JSR パッケージの specifier を指定します。
+    *   `args`: `run` と必要なパーミッション (`--allow-env`, `--allow-net=api.esa.io`, `--allow-read`)、そして JSR パッケージの specifier を指定します。(依存ライブラリの都合上、`--allow-env` が必要です。)
     *   `env`: 環境変数を **直接** 設定します。**この方法を使用する場合、`.cursor/mcp.json` のコミットは絶対に避けてください。**
 
 ---
