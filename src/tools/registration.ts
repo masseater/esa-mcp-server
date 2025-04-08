@@ -1,43 +1,62 @@
+import { z } from "zod";
 import type { FastMCP } from "fastmcp";
-import { implementations } from "./implementations.ts";
-import { createEsaToolExecutor } from "./common_executor.ts";
-import { EsaToolImplementation } from "./types.ts";
+import { getUserInfo } from "../esa_client/user.ts";
+import { getPosts } from "../esa_client/posts.ts";
+import type { GetPostsOptions } from "../esa_client/types.ts";
+// import { err, ok } from "../esa_client/types.ts"; // 使わない
+// import type { EsaUser } from "../esa_client/types.ts"; // 使わない
 
-/**
- * Registers all defined esa.io tools with the FastMCP server.
- * Iterates through the implementations map and adds each tool.
- */
-export function registerEsaTools(server: FastMCP): void {
-    // Logging during registration is not possible via context.log
+export function registerEsaTools(server: FastMCP) {
+    // user.get_info ツール
+    server.addTool({
+        name: "user.get_info",
+        description: "Get current esa.io user information",
+        parameters: z.object({}), // 引数なし
+        execute: async (_args, { log }) => { // log を受け取る
+            log.info("Executing user.get_info");
+            const result = await getUserInfo();
 
-    for (const [key, impl] of Object.entries(implementations)) {
-        const toolImpl = impl as EsaToolImplementation;
+            if (result.ok) {
+                log.info("getUserInfo succeeded");
+                return JSON.stringify(result.value, null, 2);
+            } else {
+                log.error(`getUserInfo failed: ${result.error.message}`);
+                throw result.error;
+            }
+        },
+    });
 
-        if (!toolImpl.config || !toolImpl.schema || !toolImpl.logic) {
-            throw new Error(
-                `Tool registration failed: Implementation for key '${key}' is incomplete (missing config, schema, or logic).`,
+    // posts.get_list ツール
+    const getPostsParamsSchema = z.object({
+        q: z.string().optional().describe("Search query"),
+        page: z.number().int().positive().optional().describe("Page number"),
+        per_page: z.number().int().positive().max(100).optional().describe(
+            "Number of posts per page (max 100)",
+        ),
+    }).strict(); // strict() を追加して、定義外のパラメータをエラーにする
+
+    server.addTool({
+        name: "posts.get_list",
+        description: "Get a list of posts from esa.io",
+        parameters: getPostsParamsSchema,
+        execute: async (args, { log }) => {
+            log.info(
+                `Executing posts.get_list with args: ${JSON.stringify(args)}`,
             );
-        }
+            // Zod スキーマで検証済みの args をそのまま GetPostsOptions として渡せるはず
+            const options: GetPostsOptions = args;
+            const result = await getPosts(options);
 
-        try {
-            server.addTool({
-                name: toolImpl.config.name,
-                description: toolImpl.config.description,
-                parameters: toolImpl.schema,
-                execute: createEsaToolExecutor({
-                    toolName: toolImpl.config.name,
-                    apiFn: toolImpl.logic.apiFn,
-                    getClientParams: toolImpl.logic.getClientParams,
-                    formatSuccessOutput: toolImpl.logic.formatSuccessOutput,
-                }),
-            });
-        } catch (error) {
-            throw new Error(
-                `Failed to register tool '${toolImpl.config.name}' (key: ${key}): ${
-                    error instanceof Error ? error.message : String(error)
-                }`,
-                { cause: error },
-            );
-        }
-    }
+            if (result.ok) {
+                log.info("getPosts succeeded");
+                // TODO: 結果が多い場合、全部返すのは適切か検討
+                return JSON.stringify(result.value, null, 2);
+            } else {
+                log.error(`getPosts failed: ${result.error.message}`);
+                throw result.error;
+            }
+        },
+    });
+
+    // 他のツールはここに追加していく...
 }
