@@ -1,5 +1,6 @@
 import { FastMCP } from "fastmcp";
 import { z } from "zod"; // Or any validation library that supports Standard Schema
+import { registerEsaTools } from "./src/tools/registration.ts";
 
 const server = new FastMCP({
     name: "esa-mcp-server",
@@ -33,6 +34,8 @@ server.addTool({
         return Promise.resolve(args.message);
     },
 });
+
+registerEsaTools(server);
 
 await server.start({
     transportType: "stdio",
