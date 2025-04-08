@@ -14,16 +14,88 @@ Deno を使用して構築されています。
 *   記事の更新
 *   記事の削除
 
-## 前提条件
+## URL から直接実行 (Running Directly from URL)
+
+このサーバーは、リポジトリをローカルにクローンすることなく、URL から直接実行することも可能です。
+
+### 前提条件 (Prerequisites)
+
+*   [Deno](https://deno.land/) v2.0 以降がインストールされていること。(Deno v2.0 or later installed.)
+*   インターネット接続。(Internet connection.)
+
+### セットアップ (Setup)
+
+1.  **環境変数の設定 (Set up environment variables):**
+    サーバーを実行したいディレクトリに `.env` ファイルを作成し、以下の内容を記述します。(Create a `.env` file in the directory where you want to run the server and add the following content:)
+
+    ```dotenv
+    # .env
+    ESA_TEAM_NAME="YOUR_ESA_TEAM_NAME" # Replace with your esa.io team name
+    ESA_TOKEN="YOUR_ESA_API_TOKEN"     # Replace with your esa.io API access token
+    ```
+    `YOUR_ESA_TEAM_NAME` と `YOUR_ESA_API_TOKEN` を実際の値に置き換えてください。(Replace `YOUR_ESA_TEAM_NAME` and `YOUR_ESA_API_TOKEN` with your actual values.)
+
+### 実行 (Running)
+
+以下のコマンドを実行します。(Run the following command:)
+
+```bash
+deno run --allow-env --allow-net --allow-read=.env --import-map=https://raw.githubusercontent.com/masseater/esa-mcp-server/main/deno.jsonc https://raw.githubusercontent.com/masseater/esa-mcp-server/main/main.ts
+```
+
+*   `--allow-env`: 環境変数 (`.env` から読み込んだもの) へのアクセスを許可します。
+*   `--allow-net`: esa.io API との通信を許可します。
+*   `--allow-read=.env`: カレントディレクトリの `.env` ファイルの読み取りを許可します。
+*   `--import-map=<URL>`: モジュールの解決に使用するインポートマップ (この場合は `deno.jsonc` の URL) を指定します。
+
+これで、ローカルにコードがなくても MCP サーバーが起動します。
+
+**(注意) MCP サーバーとしての利用:**
+一般的に、MCPサーバーとして安定して利用する場合は、ローカルにクローンして絶対パスを指定する方法が推奨されます（起動速度やデバッグのしやすさのため）。
+
+ただし、URLから直接MCPサーバーとして実行したい場合は、`.cursor/mcp.json` で以下のように設定できます。この場合でも、機密情報（APIトークンなど）は別途実行ディレクトリに `.env` ファイルを配置して管理することを強く推奨します。
+
+```json
+{
+  "mcpServers": {
+    "esa-mcp-server-url": {
+      "command": "deno",
+      "args": [
+        "run",
+        "--allow-env",
+        "--allow-net",
+        "--allow-read=.env",
+        "--import-map=https://raw.githubusercontent.com/masseater/esa-mcp-server/main/deno.jsonc",
+        "https://raw.githubusercontent.com/masseater/esa-mcp-server/main/main.ts"
+      ],
+      "env": {
+        "ESA_TOKEN": "YOUR_ESA_API_TOKEN",
+        "ESA_TEAM_NAME": "YOUR_ESA_TEAM_NAME"
+      }
+    }
+  }
+}
+```
+*   **ポイント:**
+    *   `command`: `deno` を指定します。
+    *   `args`: `run` と必要なパーミッション (`--allow-env`, `--allow-net`, `--allow-read=.env`)、`--import-map` フラグ（`deno.jsonc` の URL を指定）、そして `main.ts` の URL を指定します。
+    *   `env`: 環境変数を設定します。
+
+---
+
+## ローカルでの開発と実行 (Local Development and Execution)
+
+### 前提条件
 
 *   [Deno](https://deno.land/) がインストールされていること。 **v2.0 以降が必要です。** (Install [Deno](https://deno.land/). **Deno v2.0 or later is required.**)
 *   esa.io の API トークンを持っていること。
+*   (オプション) [Git](https://git-scm.com/) がインストールされていること (リポジトリをクローンする場合)。
 
-## セットアップ (Setup)
+### セットアップ (Setup)
 
 1.  **リポジトリのクローン (Clone the repository):**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/masseater/esa-mcp-server.git
     cd esa-mcp-server
     ```
 2.  **Deno のインストール (Install Deno):**
@@ -101,11 +173,6 @@ deno run --allow-env --allow-net --allow-read main.ts
 *   `esa_mcp_server.posts.delete`: 投稿を削除します。(Delete a post.)
 
 ## 開発
-
-### 必要な環境 (Development Environment)
-
-*   **Deno v2.0 以降** (Deno v2.0 or later)
-*   有効な `ESA_TEAM_NAME` と `ESA_TOKEN` が `.env` ファイルに設定されていること (特にインテグレーションテスト実行時)。(Valid `ESA_TEAM_NAME` and `ESA_TOKEN` set in the `.env` file, especially for running integration tests.)
 
 ### チェックとテスト
 
