@@ -1,11 +1,9 @@
 # Environment variables
-.env
+.env*
+!.env.example
 
 # Cursor specific files (often contain local paths or potentially secrets)
 .cursor/
-
-# Deno lock file (optional, depends on team policy)
-# deno.lock
 
 # OS specific files
 .DS_Store

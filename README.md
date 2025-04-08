@@ -16,48 +16,44 @@ Deno を使用して構築されています。
 
 ## 前提条件
 
-*   [Deno](https://deno.land/) (v1.x.x 以降) がインストールされていること。
+*   [Deno](https://deno.land/) がインストールされていること。 **v2.0 以降が必要です。** (Install [Deno](https://deno.land/). **Deno v2.0 or later is required.**)
 *   esa.io の API トークンを持っていること。
 
-## セットアップ
+## セットアップ (Setup)
 
-1.  リポジトリをクローンします。
+1.  **リポジトリのクローン (Clone the repository):**
     ```bash
     git clone <repository-url>
     cd esa-mcp-server
     ```
-
-2.  プロジェクトルートに `.env` ファイルを作成し、以下の環境変数を設定します。
-    ```dotenv
-    # .env
-    ESA_TEAM_NAME="YOUR_ESA_TEAM_NAME" # 例: "myteam"
-    ESA_TOKEN="YOUR_ESA_API_TOKEN"     # 例: "abcdef12345..."
+2.  **Deno のインストール (Install Deno):**
+    [Deno](https://deno.land/) をインストールします。**v2.0 以降が必要です。**
+    Install [Deno](https://deno.land/). **Deno v2.0 or later is required.**
+3.  **環境変数の設定 (Set up environment variables):**
+    `.env.example` をコピーして `.env` ファイルを作成し、あなたのesa.io APIトークンとチーム名を記述します。
+    Copy `.env.example` to create a `.env` file and fill in your esa.io API token and team name.
+    ```bash
+    cp .env.example .env
+    # Edit .env with your actual token and team name
     ```
-    `YOUR_ESA_TEAM_NAME` と `YOUR_ESA_API_TOKEN` を実際の値に置き換えてください。
-
-## 使い方 (Usage)
-
-### 前提条件 (Prerequisites)
-
-*   [Deno](https://deno.land/) がインストールされていること。(Install Deno)
-*   **Deno v2.0 以降が必要です。(Deno v2.0 or later is required.)**
-*   esa.io の API トークンとチーム名が必要です。(Requires esa.io API token and team name)
-
-### セットアップ (Setup)
-
-1.  リポジトリをクローンします。(Clone the repository)
-2.  プロジェクトルートに `.env` ファイルを作成し、以下の内容を記述します。(Create a `.env` file in the project root and add the following content)
-
-    ```dotenv
-    ESA_TOKEN=YOUR_ESA_API_TOKEN
-    ESA_TEAM_NAME=YOUR_ESA_TEAM_NAME
+    セキュリティのため、`.env` ファイルは `.gitignore` に追加されており、リポジトリには含まれません。
+    For security reasons, the `.env` file is included in `.gitignore` and will not be part of the repository.
+4.  **(推奨) Git フックの有効化 (Enable Git Hooks (Recommended)):**
+    コミット前にコードのチェックを自動的に行うために、以下のコマンドを実行して Git フックをセットアップします。
+    To automatically check your code before committing, run the following command to set up Git hooks using `deno_hooks`:
+    ```bash
+    deno run -A https://deno.land/x/deno_hooks/mod.ts install
     ```
+    これにより、`deno.jsonc` で定義された `pre-commit` タスク (`deno task check:all`) がコミット時に実行されます。
+    This ensures the `pre-commit` task defined in `deno.jsonc` (`deno task check:all`) runs upon commit.
 
-    `YOUR_ESA_API_TOKEN` と `YOUR_ESA_TEAM_NAME` を実際の値に置き換えてください。(Replace `YOUR_ESA_API_TOKEN` and `YOUR_ESA_TEAM_NAME` with your actual values.)
+## MCPサーバーとしての使い方 (Usage as MCP Server)
 
-3.  (任意) Cursor で MCP サーバーとして設定します。 (Optional: Configure as an MCP server in Cursor)
-    `.cursor/mcp.json` に以下の設定を追加します。(Add the following configuration to `.cursor/mcp.json`)
+Cursor でこのリポジトリを MCP サーバーとして使用する場合の設定方法です。
 
+1.  **(オプション) MCPサーバー設定 (Configure MCP Server (Optional)):**
+     `.cursor/mcp.json` に以下の設定を追加します。
+    (Optional: Add the following configuration to `.cursor/mcp.json`)
     ```json
     {
       "mcpServers": {
@@ -78,13 +74,12 @@ Deno を使用して構築されています。
       }
     }
     ```
-
     **注意:**
     *   `ABSOLUTE_PATH_TO/esa-mcp-server/main.ts` は、あなたの環境における `main.ts` への **絶対パス** に書き換えてください。(Replace `ABSOLUTE_PATH_TO/esa-mcp-server/main.ts` with the **absolute path** to `main.ts` in your environment.)
     *   `.cursor/mcp.json` で `env` を `${env:VAR_NAME}` の形式で指定すると、`.env` ファイルから値を読み込むことができます。(Using `${env:VAR_NAME}` in `.cursor/mcp.json` allows reading values from the `.env` file.)
     *   **セキュリティ上の注意**: `.cursor/mcp.json` に直接 API トークンを書き込まないでください。`.env` ファイルを使用することを強く推奨します。(**Security Note**: Do not hardcode your API token directly in `.cursor/mcp.json`. Using the `.env` file is strongly recommended.)
 
-### 実行 (Running)
+## 実行 (Running)
 
 Cursor で MCP サーバーとして設定した場合、Cursor が自動的にサーバーを起動します。
 
@@ -106,6 +101,11 @@ deno run --allow-env --allow-net --allow-read main.ts
 *   `esa_mcp_server.posts.delete`: 投稿を削除します。(Delete a post.)
 
 ## 開発
+
+### 必要な環境 (Development Environment)
+
+*   **Deno v2.0 以降** (Deno v2.0 or later)
+*   有効な `ESA_TEAM_NAME` と `ESA_TOKEN` が `.env` ファイルに設定されていること (特にインテグレーションテスト実行時)。(Valid `ESA_TEAM_NAME` and `ESA_TOKEN` set in the `.env` file, especially for running integration tests.)
 
 ### チェックとテスト
 
