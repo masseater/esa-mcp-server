@@ -1,5 +1,5 @@
 // src/esa_client/delete_post.integration.test.ts
-import { assertEquals, assertExists } from "@std/assert";
+import { assertEquals, assertExists, assertStringIncludes } from "@std/assert";
 import { loadSync } from "dotenv";
 import { createPost, deletePost, getPostDetail } from "./posts.ts"; // getPostDetail も追加
 
@@ -71,5 +71,18 @@ Deno.test("Integration: deletePost should delete a created post", async () => {
     );
     if (!verifyResult.ok) {
         // ok が false であれば削除成功とみなす
+        // さらに、エラーメッセージに "API Error 404" が含まれることを確認
+        assertExists(verifyResult.error, "Error should exist when ok is false");
+        assertStringIncludes(
+            verifyResult.error.message,
+            "API Error 404",
+            `Expected getPostDetail to fail with 404 Not Found, but got error: ${verifyResult.error.message}`,
+        );
+    } else {
+        // 成功した場合 (削除されていない場合) はテスト失敗。上の assertEquals で捕捉されるはずだが念のため
+        // この分岐に到達することは通常ないはず
+        throw new Error(
+            `Assertion failed: getPostDetail succeeded for deleted post #${postNumber}`,
+        );
     }
 });
