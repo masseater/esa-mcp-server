@@ -1,8 +1,17 @@
 import { z } from "zod";
 import type { FastMCP } from "fastmcp";
 import { getUserInfo } from "../esa_client/user.ts";
-import { createPost, getPostDetail, getPosts } from "../esa_client/posts.ts";
-import type { CreatePostBody, GetPostsOptions } from "../esa_client/types.ts";
+import {
+    createPost,
+    getPostDetail,
+    getPosts,
+    updatePost,
+} from "../esa_client/posts.ts";
+import type {
+    CreatePostBody,
+    GetPostsOptions,
+    UpdatePostBody,
+} from "../esa_client/types.ts";
 // import { err, ok } from "../esa_client/types.ts"; // 使わない
 // import type { EsaUser } from "../esa_client/types.ts"; // 使わない
 
@@ -130,6 +139,56 @@ export function registerEsaTools(server: FastMCP) {
                 return JSON.stringify(result.value, null, 2);
             } else {
                 log.error(`createPost failed: ${result.error.message}`);
+                throw result.error;
+            }
+        },
+    });
+
+    // posts.update ツール
+    const updatePostParamsSchema = z.object({
+        post_number: z.number().int().positive().describe(
+            "The number of the post to update",
+        ),
+        name: z.string().min(1).optional().describe("New post title"),
+        body_md: z.string().optional().describe(
+            "New post body in Markdown format",
+        ),
+        tags: z.array(z.string()).optional().describe("New list of tags"),
+        category: z.string().optional().describe("New category path"),
+        wip: z.boolean().optional().describe("New WIP status"),
+        message: z.string().optional().describe(
+            "Commit message for the update",
+        ),
+    }).strict();
+
+    server.addTool({
+        name: "posts.update",
+        description: "Update an existing post on esa.io",
+        parameters: updatePostParamsSchema,
+        execute: async (args, { log }) => {
+            log.info(
+                `Executing posts.update with args: ${JSON.stringify(args)}`,
+            );
+            const { post_number, ...updateData } = args;
+
+            // 更新データが空でないことを確認
+            if (Object.keys(updateData).length === 0) {
+                const errorMsg =
+                    "No update data provided. Please specify at least one field to update.";
+                log.warn(errorMsg);
+                // ユーザーフレンドリーなエラーを返すのが良いかも？
+                // throw new Error(errorMsg);
+                return JSON.stringify({ error: errorMsg });
+            }
+
+            const postBody: UpdatePostBody = { post: updateData };
+            const result = await updatePost(post_number, postBody);
+
+            if (result.ok) {
+                log.info("updatePost succeeded");
+                return JSON.stringify(result.value, null, 2);
+            } else {
+                log.error(`updatePost failed: ${result.error.message}`);
                 throw result.error;
             }
         },
