@@ -1,9 +1,5 @@
 import { z } from "zod";
 import { Result } from "../esa_client/types.ts"; // Import Result from the correct location
-// import type { esaClientConfig } from "../esa_client/config.ts"; // Config is used internally by API functions
-
-// Derive the type from the config object itself
-// type EsaClientConfig = typeof esaClientConfig; // Not needed for the logic type
 
 /**
  * Type for the actual API function that the logic object will hold.

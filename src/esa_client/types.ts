@@ -1,20 +1,10 @@
 // --- Result 型定義 ---
-/**
- * 処理結果を示す汎用的な型なのだ。
- * 成功時は { ok: true, value: T }、失敗時は { ok: false, error: E } となるのだ。
- */
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
-/**
- * 成功時の Result オブジェクトを作成するヘルパー関数なのだ。
- */
 export function ok<T, E>(value: T): Result<T, E> {
     return { ok: true, value };
 }
 
-/**
- * 失敗時の Result オブジェクトを作成するヘルパー関数なのだ。
- */
 export function err<T, E>(error: E): Result<T, E> {
     return { ok: false, error };
 }
@@ -105,9 +95,6 @@ export interface CreatePostBody {
     };
 }
 
-/**
- * 記事作成APIのレスポンス型
- */
 export type CreatePostResponse = EsaPost;
 
 /**
@@ -125,9 +112,6 @@ export interface UpdatePostBody {
     };
 }
 
-/**
- * 記事更新APIのレスポンス型
- */
 export type UpdatePostResponse = EsaPost;
 
 export type User = {

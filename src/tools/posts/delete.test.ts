@@ -15,7 +15,6 @@ describe("deletePostLogic", () => {
     describe("formatSuccessOutput", () => {
         it("は、正しいpostNumberを含む成功メッセージを生成すること", () => {
             const expectedMessage = `Successfully initiated post deletion.`;
-            // Use non-null assertion as formatSuccessOutput exists
             const result = logic.formatSuccessOutput!(true);
             assertEquals(result, expectedMessage);
         });

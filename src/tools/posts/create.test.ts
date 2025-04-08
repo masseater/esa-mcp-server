@@ -3,7 +3,6 @@ import { assertEquals } from "@std/assert";
 import { logic, schema } from "./create.ts";
 import { z } from "zod";
 
-// Type alias for inferred schema type
 type CreatePostParams = z.infer<typeof schema>;
 
 describe("createPostLogic", () => {
@@ -31,13 +30,9 @@ describe("createPostLogic", () => {
                     name: "Minimal Post",
                 },
             };
-            // Ensure default wip is handled correctly if schema defines it
             const expectedParams = { post: validatedData.post };
             const result = logic.getClientParams(validatedData);
             assertEquals(result, expectedParams);
         });
     });
-
-    // formatSuccessOutput is implemented, add tests if needed
-    // describe("formatSuccessOutput", () => { ... });
 });

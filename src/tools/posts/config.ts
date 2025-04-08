@@ -1,7 +1,3 @@
-// Defines the configuration (name, description) for each post-related tool.
-// The keys should ideally match the implementation file names (without .ts)
-// or some other consistent identifier used in the registration logic.
-
 export const postsToolConfigs = {
     create: {
         name: "create_post",
@@ -23,7 +19,6 @@ export const postsToolConfigs = {
         name: "delete_post",
         description: "Delete a specific post on esa.io.",
     },
-} as const; // Use 'as const' for stricter typing of keys and values
+} as const;
 
-// Optional: Define a type for the keys if needed elsewhere
 export type PostToolName = keyof typeof postsToolConfigs;

@@ -1,4 +1,4 @@
-import { /*afterEach, beforeEach,*/ describe, it } from "@std/testing/bdd";
+import { describe, it } from "@std/testing/bdd";
 import { assertEquals } from "@std/assert";
 import type { EsaPost } from "../../esa_client/types.ts";
 import { logic } from "./update.ts";
@@ -24,10 +24,9 @@ describe("updatePostLogic", () => {
             const mockPost = {
                 number: 789,
                 full_name: "category/Updated Post Title",
-            } as EsaPost; // Use the correct type
+            } as EsaPost;
             const expectedMessage =
                 `Successfully updated post #789: category/Updated Post Title`;
-            // Use non-null assertion as formatSuccessOutput exists
             const result = logic.formatSuccessOutput!(mockPost);
             assertEquals(result, expectedMessage);
         });

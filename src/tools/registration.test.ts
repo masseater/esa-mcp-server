@@ -6,7 +6,6 @@ import type { FastMCP } from "fastmcp/mod.ts";
 import { implementations } from "./implementations.ts";
 import { registerEsaTools } from "./registration.ts";
 
-// Copied from common_executor.test.ts
 const createMockLogger = () => ({
     debug: spy(),
     error: spy(),

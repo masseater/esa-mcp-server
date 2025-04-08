@@ -11,7 +11,4 @@ describe("getPostDetailLogic", () => {
             assertStrictEquals(result, expectedParams);
         });
     });
-
-    // formatSuccessOutput is not implemented, so no tests needed
-    // Add tests for clientFunction if needed
 });

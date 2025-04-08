@@ -9,9 +9,6 @@ import type {
 } from "./types.ts";
 import { err, ok } from "./types.ts";
 
-/**
- * esa.io API から記事一覧を取得する関数なのだ
- */
 export async function getPosts(
     options: GetPostsOptions = {},
 ): Promise<Result<GetPostsResponse, Error>> {
@@ -57,9 +54,6 @@ export async function getPosts(
     }
 }
 
-/**
- * esa.io API から特定の記事の詳細を取得する関数なのだ
- */
 export async function getPostDetail(
     postNumber: number,
 ): Promise<Result<EsaPost, Error>> {
@@ -95,9 +89,6 @@ export async function getPostDetail(
     }
 }
 
-/**
- * esa.io API で指定された記事を削除する関数なのだ
- */
 export async function deletePost(
     postNumber: number,
 ): Promise<Result<true, Error>> {
@@ -134,9 +125,6 @@ export async function deletePost(
     }
 }
 
-/**
- * esa.io API で新しい記事を作成する関数なのだ
- */
 export async function createPost(
     body: CreatePostBody,
 ): Promise<Result<EsaPost, Error>> {
@@ -173,9 +161,6 @@ export async function createPost(
     }
 }
 
-/**
- * esa.io API で既存の記事を更新する関数なのだ
- */
 export async function updatePost(
     postNumber: number,
     body: UpdatePostBody,
