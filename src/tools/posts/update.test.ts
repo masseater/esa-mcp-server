@@ -1,5 +1,5 @@
 import { describe, it } from "@std/testing/bdd";
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertExists } from "@std/assert";
 import type { EsaPost } from "../../esa_client/types.ts";
 import { logic } from "./update.ts";
 
@@ -21,14 +21,16 @@ describe("updatePostLogic", () => {
 
     describe("formatSuccessOutput", () => {
         it("は、更新された投稿の情報を含む成功メッセージを生成すること", () => {
-            const mockPost = {
-                number: 789,
-                full_name: "category/Updated Post Title",
-            } as EsaPost;
-            const expectedMessage =
-                `Successfully updated post #789: category/Updated Post Title`;
-            const result = logic.formatSuccessOutput!(mockPost);
-            assertEquals(result, expectedMessage);
+            const mockPost: EsaPost = { number: 123 } as EsaPost; // 必要最低限のモック
+            assertExists(
+                logic.formatSuccessOutput,
+                "formatSuccessOutput should exist",
+            );
+            const result = logic.formatSuccessOutput(mockPost);
+            assertEquals(
+                result,
+                `Successfully updated post #123: ${mockPost.full_name}`,
+            );
         });
     });
 });

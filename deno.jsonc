@@ -3,16 +3,14 @@
         "dev": "deno run --watch --allow-read --allow-env --allow-net --allow-read main.ts",
         "start": "deno run --allow-env --allow-net --allow-read main.ts",
         "test": "deno test --allow-env --allow-read --allow-run",
-        "test:mcp": "deno run --allow-run --allow-read --allow-env --allow-net npm:@modelcontextprotocol/inspector \"deno run --watch --allow-env --allow-net --allow-read main.ts\"",
+        "test:mcp": "deno run --allow-run --allow-read --allow-env --allow-net npm:@modelcontextprotocol/inspector deno run --allow-env --allow-net --allow-read main.ts",
         "fmt": "deno fmt",
         "lint": "deno lint",
         "lint:fix": "deno lint --fix",
         "check": "deno check",
-        "tsr:check:main": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$'",
-        "tsr:check:test_only": "deno run --allow-read --allow-env npm:tsr '.*\\.test\\.ts$'",
-        "tsr:check:both": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$' '.*\\.test\\.ts$'",
+        "tsr:check": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$' '.*\\.test\\.ts$'",
         "tsr:fix": "deno run --allow-read --allow-env --allow-write npm:tsr -w 'main\\.ts$'",
-        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check:main && deno check && deno task test"
+        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check && deno check && deno task test"
     },
     "lint": {
         "include": ["**/*.ts"],
@@ -20,7 +18,20 @@
         "rules": {
             "tags": ["recommended"],
             "include": [
-                "no-console"
+                "no-console",
+                "ban-ts-comment",
+                "no-throw-literal",
+                "require-await",
+                "no-empty-interface",
+                "no-inferrable-types",
+                "prefer-const",
+                "no-non-null-assertion",
+                "no-external-import",
+                "eqeqeq",
+                "no-this-alias",
+                "no-await-in-loop",
+                "no-async-promise-executor",
+                "guard-for-in"
             ]
         }
     },

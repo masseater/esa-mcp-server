@@ -1,8 +1,5 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import {
-    returnsNext,
-    stub,
-} from "https://deno.land/std@0.224.0/testing/mock.ts";
+import { assertEquals } from "@std/assert";
+import { returnsNext, stub } from "@std/testing/mock";
 
 import {
     createPost,

@@ -1,5 +1,5 @@
 import { describe, it } from "@std/testing/bdd";
-import { assertEquals, assertStrictEquals } from "@std/assert";
+import { assertEquals, assertExists, assertStrictEquals } from "@std/assert";
 import { logic } from "./delete.ts";
 
 describe("deletePostLogic", () => {
@@ -15,7 +15,11 @@ describe("deletePostLogic", () => {
     describe("formatSuccessOutput", () => {
         it("は、正しいpostNumberを含む成功メッセージを生成すること", () => {
             const expectedMessage = `Successfully initiated post deletion.`;
-            const result = logic.formatSuccessOutput!(true);
+            assertExists(
+                logic.formatSuccessOutput,
+                "formatSuccessOutput should exist",
+            );
+            const result = logic.formatSuccessOutput(true);
             assertEquals(result, expectedMessage);
         });
     });
