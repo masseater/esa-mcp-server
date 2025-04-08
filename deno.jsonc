@@ -11,7 +11,7 @@
         "check": "deno check **/*.ts",
         "tsr:check": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$' '.*\\.test\\.ts$'",
         "tsr:fix": "deno run --allow-read --allow-env --allow-write npm:tsr -w 'main\\.ts$'",
-        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check && deno task check && deno task test"
+        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check && deno task check && deno task test && git status | cat"
     },
     "lint": {
         "include": ["**/*.ts"],
