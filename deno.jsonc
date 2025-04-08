@@ -8,7 +8,9 @@
         "lint": "deno lint",
         "lint:fix": "deno lint --fix",
         "check": "deno check",
-        "check:all": "deno task fmt && deno task lint:fix && deno check **/*.ts && deno task test"
+        "tsr:check": "deno run --allow-read --allow-env npm:tsr 'main\\.ts$' '.*\\.test\\.ts$'",
+        "tsr:fix": "deno run --allow-read --allow-env --allow-write npm:tsr -w 'main\\.ts$' '.*\\.test\\.ts$'",
+        "check:all": "deno task fmt && deno task lint:fix && deno task tsr:check && deno check **/*.ts && deno task test"
     },
     "lint": {
         "include": ["**/*.ts"],
@@ -41,6 +43,7 @@
         "std/": "https://deno.land/std@0.224.0/",
         "dotenv": "https://deno.land/std@0.224.0/dotenv/mod.ts",
         "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.8.0",
+        "tsr": "npm:tsr@^1.3.4",
         "zod": "npm:zod@^3.24.2"
     },
     "nodeModulesDir": "auto"

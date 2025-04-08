@@ -95,8 +95,6 @@ export interface CreatePostBody {
     };
 }
 
-export type CreatePostResponse = EsaPost;
-
 /**
  * 記事更新APIに渡すリクエストボディの型
  * @see https://docs.esa.io/posts/102#PATCH /v1/teams/:team_name/posts/:post_number
@@ -111,12 +109,3 @@ export interface UpdatePostBody {
         message?: string;
     };
 }
-
-export type UpdatePostResponse = EsaPost;
-
-export type User = {
-    name: string;
-    screen_name: string;
-    icon: string;
-    myself: boolean;
-};
